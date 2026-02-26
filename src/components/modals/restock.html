@@ -1,0 +1,34 @@
+    <div id="restock-modal" class="modal-overlay">
+      <div class="modal-content glass-card" style="max-width: 400px;">
+        <button id="btn-close-restock-modal" class="btn-close" aria-label="Fechar">&times;</button>
+        
+        <div class="modal-header">
+          <h2>Reposição de Estoque</h2>
+          <p id="restock-product-name" style="font-weight: 800; color: hsl(var(--accent-color)); font-size: 1.1rem; margin-top: 0.5rem;"></p>
+        </div>
+
+        <form id="restock-form" class="auth-form active" style="margin-top: 1rem;">
+          <input type="hidden" id="restock-prod-id" value="">
+          
+          <div style="display: grid; gap: 1.2rem;">
+            <div style="display: flex; justify-content: space-between; background: hsl(var(--bg-secondary)); padding: 0.8rem; border-radius: 8px; font-size: 0.9rem;">
+                <span style="color: hsl(var(--text-secondary));">Estoque Atual:</span>
+                <strong id="restock-current-stock">0</strong>
+            </div>
+
+            <div class="form-group">
+              <label for="restock-qty">Quantidade a Adicionar</label>
+              <input type="number" id="restock-qty" placeholder="Ex: 5" min="1" required style="font-size: 1.2rem; text-align: center; font-weight: 800;">
+            </div>
+
+            <div class="form-group">
+              <label for="restock-new-cost">Novo Preço de Custo (R$)</label>
+              <input type="text" id="restock-new-cost" placeholder="R$ 0,00" required>
+              <small style="color: hsl(var(--text-secondary));">O custo pode ter mudado no seu fornecedor.</small>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full" id="btn-submit-restock" style="margin-top: 1rem; padding: 1rem; font-size: 1rem;">Confirmar Entrada de Estoque</button>
+        </form>
+      </div>
+    </div>

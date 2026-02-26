@@ -1,0 +1,78 @@
+    <div id="checkout-modal" class="modal-overlay">
+      <div class="modal-content glass-card" style="max-width: 500px;">
+        <button id="btn-close-checkout" class="btn-close" aria-label="Fechar">&times;</button>
+        
+        <div class="modal-header">
+          <h2>Finalizar Pagamento</h2>
+          <p>Escolha a forma de pagamento desejada</p>
+        </div>
+
+        <div style="margin-top: 1rem;">
+          <h3 style="text-align: center; margin-bottom: 1rem;">Total: <span id="checkout-total-price" style="color: var(--primary);">R$ 0,00</span></h3>
+          
+          <div style="background: hsl(var(--bg-secondary)); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid hsl(var(--text-secondary)/0.2);">
+            <h4 style="margin-bottom: 0.8rem; font-size: 0.95rem;">Endereço de Entrega (Transportadora)</h4>
+            <div class="form-group" style="margin-bottom: 0.8rem;">
+              <input type="text" id="checkout-zipcode" placeholder="CEP (Apenas números)" maxlength="9" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0.8rem;">
+              <input type="text" id="checkout-address" placeholder="Endereço (Rua, Número, Bairro)" required>
+            </div>
+            <div class="form-group">
+              <input type="text" id="checkout-city" placeholder="Cidade / Estado" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="payment-method">Forma de Pagamento</label>
+            <select id="payment-method" style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid hsl(var(--text-secondary)/0.3); background: hsl(var(--bg-secondary)); color: hsl(var(--text-primary)); margin-top: 0.5rem;" required>
+              <option value="cartao_credito">💳 Cartão de Crédito</option>
+              <option value="pix">💠 PIX</option>
+              <option value="boleto">📄 Boleto Bancário</option>
+            </select>
+          </div>
+
+          <!-- Campos do PIX Dinâmicos -->
+          <div id="pix-details" style="display: none; text-align: center; margin: 1.5rem 0; background: hsl(var(--bg-secondary)); padding: 1rem; border-radius: 8px; border: 1px dashed hsl(var(--primary)/0.5);">
+            <p style="font-size: 0.9rem; margin-bottom: 0.5rem;">Escaneie o QR Code ou copie o código PIX</p>
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=00020126440014BR.GOV.BCB.PIX0114+55119999999995204000053039865802BR5911Loja+Virtual6009SAO+PAULO62070503***6304" alt="QR Code PIX" style="border-radius: 8px; margin-bottom: 1rem;">
+            <br>
+            <button class="btn btn-outline" style="font-size: 0.8rem;" onclick="window.showDialog('PIX', 'Código PIX copiado com sucesso!', false)">Copiar Código PIX</button>
+          </div>
+
+          <!-- Campos do Cartão Dinâmicos -->
+          <div id="credit-card-details" style="display: block; margin: 1.5rem 0; background: hsl(var(--bg-secondary)); padding: 1rem; border-radius: 8px; border: 1px solid hsl(var(--text-secondary)/0.2);">
+            <div class="form-group">
+              <label>Número do Cartão</label>
+              <input type="text" id="cc-number" placeholder="0000 0000 0000 0000" maxlength="19" style="width: 100%; margin-top: 0.5rem;" required>
+            </div>
+            <div style="display: flex; gap: 1rem; margin-top: 0.8rem;">
+              <div class="form-group" style="flex:1;">
+                <label>Validade</label>
+                <input type="text" id="cc-validity" placeholder="MM/AA" maxlength="5" style="width: 100%; margin-top: 0.5rem;" required>
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label>CVV</label>
+                <input type="text" id="cc-cvv" placeholder="123" maxlength="4" style="width: 100%; margin-top: 0.5rem;" required>
+              </div>
+            </div>
+            <div class="form-group" style="margin-top: 0.8rem;">
+              <label>Número de Parcelas</label>
+              <select id="cc-installments" style="width: 100%; margin-top: 0.5rem; padding: 0.8rem; border-radius: 8px; border: 1px solid hsl(var(--text-secondary)/0.3); background: hsl(var(--bg-secondary)); color: hsl(var(--text-primary));" required>
+                <option value="1">1x (À vista)</option>
+              </select>
+            </div>
+            <div id="cc-brands" style="margin-top: 0.8rem; display: flex; gap: 0.5rem; color: hsl(var(--text-secondary)); font-size: 0.8rem; align-items: center; justify-content: flex-end;">
+                Bandeiras aceitas no pedido: <b id="cc-allowed-brands">VISA, MASTERCARD</b>
+            </div>
+          </div>
+
+          <!-- Campos de Boleto -->
+          <div id="boleto-details" style="display: none; text-align: center; margin: 1.5rem 0; background: hsl(var(--bg-secondary)); padding: 1rem; border-radius: 8px; border: 1px dashed hsl(var(--text-secondary)/0.5);">
+            <p style="font-size: 0.9rem;">O boleto será gerado e enviado para o seu e-mail após a confirmação do pedido.</p>
+          </div>
+
+          <button id="btn-confirm-payment" class="btn btn-primary btn-full" style="margin-top: 1rem;">Confirmar Pagamento e Gerar Pedido</button>
+        </div>
+      </div>
+    </div>

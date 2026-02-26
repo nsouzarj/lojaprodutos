@@ -1,0 +1,55 @@
+    <div id="auth-modal" class="modal-overlay">
+      <div class="modal-content glass-card">
+        <button id="btn-close-modal" class="btn-close" aria-label="Fechar">&times;</button>
+        
+        <div class="modal-header">
+          <h2 id="auth-title">Bem-vindo(a)</h2>
+          <p id="auth-subtitle">Acesso rápido com seu e-mail</p>
+        </div>
+
+        <!-- Formulário de Login -->
+        <form id="login-form" class="auth-form active">
+          <div class="form-group">
+            <label for="login-email">E-mail</label>
+            <input type="email" id="login-email" placeholder="seu@email.com" required>
+          </div>
+          <div class="form-group">
+            <label for="login-password">Senha</label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <input type="password" id="login-password" placeholder="Sua senha" required style="padding-right: 40px; width: 100%;">
+              <button type="button" class="btn-toggle-password" data-target="login-password" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: hsl(var(--text-secondary)); font-size: 1.2rem; padding: 0;">👁️</button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full" id="btn-submit-login">Entrar</button>
+          <div class="auth-switch">
+             <p>Ainda não tem conta? <a href="#" id="link-to-register" class="gradient-text">Cadastre-se</a></p>
+          </div>
+        </form>
+
+        <!-- Formulário de Registro -->
+        <form id="register-form" class="auth-form">
+          <div class="form-group">
+            <label for="reg-name">Nome Completo</label>
+            <input type="text" id="reg-name" placeholder="Seu nome" required>
+          </div>
+          <div class="form-group">
+            <label for="reg-email">E-mail</label>
+            <input type="email" id="reg-email" placeholder="seu@email.com" required>
+          </div>
+          <div class="form-group">
+            <label for="reg-password">Senha (Min 6 chars)</label>
+            <div style="position: relative; display: flex; align-items: center;">
+              <input type="password" id="reg-password" placeholder="Crie uma senha" minlength="6" required style="padding-right: 40px; width: 100%;">
+              <button type="button" class="btn-toggle-password" data-target="reg-password" style="position: absolute; right: 10px; background: none; border: none; cursor: pointer; color: hsl(var(--text-secondary)); font-size: 1.2rem; padding: 0;">👁️</button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full" id="btn-submit-register">Criar Conta</button>
+          <div class="auth-switch">
+             <p>Já tem uma conta? <a href="#" id="link-to-login" class="gradient-text">Faça Login</a></p>
+          </div>
+        </form>
+        
+        <!-- Alertas de Erro/Sucesso -->
+        <div id="auth-alert" class="alert hidden"></div>
+      </div>
+    </div>

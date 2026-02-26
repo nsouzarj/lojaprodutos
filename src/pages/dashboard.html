@@ -1,0 +1,349 @@
+      <div id="view-dashboard" class="container mx-auto px-4 md:px-6 lg:px-8" style="display: none; padding-top: 40px; padding-bottom: 60px; min-height: 80vh;">
+        
+        <!-- Welcome Header -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-main mb-1">Painel de Controle</h1>
+                <p class="text-muted">Acompanhe seus pedidos e gerencie sua conta.</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+          
+          <!-- Left Sidebar / Profile Card -->
+          <aside class="lg:col-span-3 xl:col-span-3 flex flex-col gap-6">
+            
+            <!-- Profile Summary Card (Stitch Dark Mode style) -->
+            <div class="glass-panel rounded-2xl p-6 flex flex-col items-center text-center relative overflow-hidden group">
+                <div class="absolute -top-20 -right-20 w-40 h-40 bg-primary/20 rounded-full blur-3xl pointer-events-none group-hover:bg-primary/30 transition-all duration-700"></div>
+                
+                <h3 id="dash-user-name" class="text-main text-xl font-bold mb-1 z-10">Carregando...</h3>
+                <span id="dash-user-role" class="text-primary text-sm font-medium mb-4 z-10 px-3 py-1 bg-primary/10 rounded-full border border-primary/20">...</span>
+            </div>
+             
+             <!-- Navigation Menu Card -->
+            <div class="glass-panel rounded-2xl p-4 flex flex-col gap-1 dash-nav">
+                <p class="px-4 py-2 text-xs font-bold text-muted uppercase tracking-wider">Menu Principal</p>
+                
+                <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn active" data-target="dash-pedidos" style="border: none; text-align: left; background: transparent;">
+                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">shopping_bag</span>
+                    Minhas Compras
+                </button>
+                
+                <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn" data-target="dash-perfil" style="border: none; text-align: left; background: transparent;">
+                    <span class="material-symbols-outlined group-hover:text-primary transition-colors">person</span>
+                    Meu Perfil
+                </button>
+                
+                <!-- Itens Exclusivos de Admin/Vendedor (Ocultos por padrão) -->
+                <div class="admin-only w-full" style="display: none;">
+                    <div class="h-px bg-border-dark w-full my-4"></div>
+                    <p class="px-4 py-2 text-xs font-bold text-muted uppercase tracking-wider">Gestão do Lojista</p>
+                    
+                    <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn" data-target="dash-produtos" style="border: none; text-align: left; background: transparent;">
+                        <span class="material-symbols-outlined group-hover:text-primary transition-colors">inventory_2</span>
+                        Catálogo e Estoque
+                    </button>
+                    
+                    <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn" data-target="dash-vendas" style="border: none; text-align: left; background: transparent;">
+                        <span class="material-symbols-outlined group-hover:text-primary transition-colors">attach_money</span>
+                        Vendas e Financeiro
+                    </button>
+                    
+                    <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn" data-target="dash-movimentacoes" style="border: none; text-align: left; background: transparent;">
+                        <span class="material-symbols-outlined group-hover:text-primary transition-colors">sync_alt</span>
+                        Movimentações
+                    </button>
+
+                    <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn" data-target="dash-clientes" style="border: none; text-align: left; background: transparent;">
+                        <span class="material-symbols-outlined group-hover:text-primary transition-colors">group</span>
+                        Clientes
+                    </button>
+
+                    <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn" data-target="dash-relatorios" style="border: none; text-align: left; background: transparent;">
+                        <span class="material-symbols-outlined group-hover:text-primary transition-colors">bar_chart</span>
+                        Relatórios
+                    </button>
+                </div>
+            </div>
+          </aside>
+          
+          <!-- Right Content Area -->
+          <section class="lg:col-span-9 xl:col-span-9 flex flex-col gap-6 lg:gap-8">
+             <div id="dash-pedidos" class="dash-panel active glass-panel rounded-2xl overflow-hidden">
+                <div class="p-6 border-b border-border-dynamic/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <h3 class="text-main text-lg font-bold">Minhas Compras</h3>
+                </div>
+                <!-- Table View -->
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left responsive-table border-collapse">
+                    <thead class="hide-on-mobile">
+                      <tr class="text-muted text-xs uppercase tracking-wider border-b border-border-dynamic/50">
+                        <th class="p-4 font-medium" data-sortable>Nº Pedido</th>
+                        <th class="p-4 font-medium" data-sortable>Data</th>
+                        <th class="p-4 font-medium">Destino</th>
+                        <th class="p-4 font-medium" data-sortable>Status</th>
+                        <th class="p-4 font-medium" data-sortable>Total</th>
+                        <th class="p-4 font-medium text-right">Ação</th>
+                      </tr>
+                    </thead>
+                    <tbody id="my-orders-table" class="text-sm divide-y divide-border-dynamic/30">
+                      <tr><td colspan="6" class="p-6 text-center text-muted">Carregando pedidos...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+             </div>
+             
+             <div id="dash-perfil" class="dash-panel p-6 glass-panel rounded-2xl" style="display: none;">
+                <h3 class="text-main text-lg font-bold mb-1">Meu Perfil</h3>
+                <p class="text-muted text-sm mb-6">Mantenha seus dados e endereço de entrega atualizados.</p>
+                
+                <form id="profile-form" class="w-full max-w-3xl">
+                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     
+                     <div class="flex flex-col gap-2 md:col-span-2">
+                       <label for="prof-name" class="text-sm font-medium text-muted">Nome ou Razão Social</label>
+                       <input type="text" id="prof-name" class="block w-full px-4 py-3 border border-border-dynamic/50 rounded-xl bg-surface-dynamic border-border-dynamic text-main placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all" placeholder="Como devemos chamar você" required>
+                     </div>
+                     
+                     <div class="flex flex-col gap-2">
+                       <label for="prof-phone" class="text-sm font-medium text-muted">WhatsApp / Telefone</label>
+                       <input type="text" id="prof-phone" class="block w-full px-4 py-3 border border-border-dynamic/50 rounded-xl bg-surface-dynamic border-border-dynamic text-main placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all" placeholder="(##) 9####-####" required maxlength="15">
+                     </div>
+                     
+                     <div class="flex flex-col gap-2">
+                       <label for="prof-zipcode" class="text-sm font-medium text-muted">CEP Padrão</label>
+                       <input type="text" id="prof-zipcode" class="block w-full px-4 py-3 border border-border-dynamic/50 rounded-xl bg-surface-dynamic border-border-dynamic text-main placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all" placeholder="Apenas números" maxlength="9">
+                     </div>
+                     
+                     <div class="flex flex-col gap-2 md:col-span-2">
+                       <label for="prof-address" class="text-sm font-medium text-muted">Endereço de Entrega Completo</label>
+                       <input type="text" id="prof-address" class="block w-full px-4 py-3 border border-border-dynamic/50 rounded-xl bg-surface-dynamic border-border-dynamic text-main placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all" placeholder="Rua Três, Nº 1452, Bairro Centro">
+                     </div>
+                     
+                     <div class="flex flex-col gap-2 md:col-span-2">
+                       <label for="prof-city" class="text-sm font-medium text-muted">Cidade / Estado</label>
+                       <input type="text" id="prof-city" class="block w-full px-4 py-3 border border-border-dynamic/50 rounded-xl bg-surface-dynamic border-border-dynamic text-main placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all" placeholder="Ex: Goiânia / GO">
+                     </div>
+                     
+                   </div>
+                   <button type="submit" id="btn-submit-profile" class="mt-8 w-full py-3 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold transition-all shadow-lg shadow-primary/25">
+                       Salvar Informações
+                   </button>
+                </form>
+             </div>
+             <div id="dash-produtos" class="dash-panel p-6 glass-panel rounded-2xl" style="display: none;">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                  <div>
+                    <h3 class="text-main text-lg font-bold">Gestão de Produtos</h3>
+                    <p class="text-muted text-sm mt-1">Controle o estoque e preços de custo da vitrine.</p>
+                  </div>
+                  
+                  <div class="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
+                    <div class="relative w-full sm:max-w-[300px]">
+                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <span class="material-symbols-outlined text-muted text-[20px]">search</span>
+                      </div>
+                      <input type="text" id="admin-search-product" placeholder="Buscar produto..." class="block w-full pl-10 pr-3 py-2.5 border border-border-dynamic/50 rounded-xl bg-surface-dynamic border-border-dynamic text-main placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-sm">
+                    </div>
+                    <button id="btn-open-product-modal" class="px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl font-medium transition-colors shadow-lg shadow-primary/20 flex items-center justify-center gap-2 whitespace-nowrap">
+                      <span class="material-symbols-outlined text-[18px]">add</span> Novo Produto
+                    </button>
+                  </div>
+                </div>
+                
+                <div class="overflow-x-auto border border-border-dynamic/30 rounded-xl">
+                  <table class="w-full text-left responsive-table border-collapse">
+                    <thead class="bg-surface-dynamic">
+                      <tr class="text-muted text-xs uppercase tracking-wider border-b border-border-dynamic/50">
+                        <th class="p-4 font-medium">Foto</th>
+                        <th class="p-4 font-medium" data-sortable>Nome</th>
+                        <th class="p-4 font-medium" data-sortable>Departamento</th>
+                        <th class="p-4 font-medium" data-sortable>Gênero</th>
+                        <th class="p-4 font-medium" data-sortable>Venda</th>
+                        <th class="p-4 font-medium" data-sortable>Custo</th>
+                        <th class="p-4 font-medium" data-sortable>Estoque</th>
+                        <th class="p-4 font-medium text-right">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody id="admin-products-table" class="text-sm divide-y divide-border-dynamic/30">
+                       <tr><td colspan="7" class="p-6 text-center text-muted">Carregando catálogo...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+             </div>
+
+             <div id="dash-clientes" class="dash-panel p-6 glass-panel rounded-2xl" style="display: none;">
+                <div class="mb-6">
+                  <h3 class="text-main text-lg font-bold">Gestão de Clientes</h3>
+                  <p class="text-muted text-sm mt-1">Veja a lista de todos os usuários registrados, para realizar o envio das mercadorias aos seus respectivos endereços.</p>
+                </div>
+                
+                <div class="overflow-x-auto border border-border-dynamic/30 rounded-xl">
+                  <table class="w-full text-left responsive-table border-collapse">
+                    <thead class="bg-surface-dynamic">
+                      <tr class="text-muted text-xs uppercase tracking-wider border-b border-border-dynamic/50">
+                        <th class="p-4 font-medium" data-sortable>Nome do Cliente</th>
+                        <th class="p-4 font-medium">Telefone</th>
+                        <th class="p-4 font-medium">Endereço Completo</th>
+                        <th class="p-4 font-medium" data-sortable>Tipo</th>
+                      </tr>
+                    </thead>
+                    <tbody id="admin-users-table" class="text-sm divide-y divide-border-dynamic/30">
+                       <tr><td colspan="4" class="p-6 text-center text-muted">Carregando usuários...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+             </div>
+             
+             <div id="dash-vendas" class="dash-panel" style="display: none;">
+                <div class="mb-6">
+                    <h3 class="text-main text-lg font-bold">Vendas & Financeiro</h3>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                   <div class="glass-panel p-6 rounded-2xl border-l-4 border-l-primary relative overflow-hidden">
+                      <p class="text-muted text-sm font-medium mb-1">Caixa Hoje</p>
+                      <h3 class="text-2xl font-bold text-main">R$ 0,00</h3>
+                   </div>
+                   <div class="glass-panel p-6 rounded-2xl border-l-4 border-l-purple-500 relative overflow-hidden">
+                      <p class="text-muted text-sm font-medium mb-1">Pedidos Pendentes</p>
+                      <h3 class="text-2xl font-bold text-main">0</h3>
+                   </div>
+                </div>
+
+                <div class="glass-panel rounded-2xl overflow-hidden">
+                  <div class="p-6 border-b border-border-dynamic/50">
+                    <h3 class="text-main text-lg font-bold">Últimas Vendas</h3>
+                  </div>
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-left responsive-table border-collapse">
+                      <thead class="bg-surface-dynamic">
+                        <tr class="text-muted text-xs uppercase tracking-wider border-b border-border-dynamic/50">
+                          <th class="p-4 font-medium" data-sortable>Nº Pedido</th>
+                          <th class="p-4 font-medium" data-sortable>Cliente</th>
+                          <th class="p-4 font-medium" data-sortable>Status</th>
+                          <th class="p-4 font-medium" data-sortable>Total</th>
+                          <th class="p-4 font-medium text-right">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody id="admin-sales-table" class="text-sm divide-y divide-border-dynamic/30">
+                         <tr><td colspan="6" class="p-6 text-center text-muted">Carregando vendas...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+             </div>
+
+             <div id="dash-relatorios" class="dash-panel p-6 glass-panel rounded-2xl" style="display: none;">
+                <h3 class="text-main text-lg font-bold mb-1">Visualização de Desempenho</h3>
+                <p class="text-muted text-sm mb-6">Acompanhe as suas métricas de produtos e faturamento.</p>
+                
+                <!-- Sub-container para Dados Dinâmicos Renderizados no JS -->
+                <div id="admin-report-content" class="mb-8 w-full"></div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                   <!-- Gráfico de Linha (Faturamento) -->
+                   <div class="glass-panel p-5 rounded-xl border border-border-dynamic/30 relative">
+                     <h4 class="text-main font-semibold mb-4 text-sm uppercase tracking-wide">Faturamento dos Últimos 7 Dias</h4>
+                     <div id="chart-receita" class="w-full h-64 flex items-center justify-center">
+                         <span class="text-muted text-sm animate-pulse">Carregando gráfico...</span>
+                     </div>
+                   </div>
+                   
+                   <!-- Gráfico de Pizza (Produtos mais vendidos) -->
+                   <div class="glass-panel p-5 rounded-xl border border-border-dynamic/30 relative">
+                     <h4 class="text-main font-semibold mb-4 text-sm uppercase tracking-wide">Mix de Vendas por Dep.</h4>
+                     <div id="chart-produtos" class="w-full h-64 flex items-center justify-center">
+                         <span class="text-muted text-sm animate-pulse">Carregando gráfico...</span>
+                     </div>
+                   </div>
+                </div>
+             </div>
+
+             <div id="dash-movimentacoes" class="dash-panel p-6 glass-panel rounded-2xl" style="display: none;">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                  <div>
+                    <h3 class="text-main text-lg font-bold">Histórico de Estoque (Kardex)</h3>
+                    <p class="text-muted text-sm mt-1">Auditoria de reposição, saídas por vendas e devoluções.</p>
+                  </div>
+                  
+                  <div class="relative w-full sm:max-w-[300px]">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span class="material-symbols-outlined text-muted text-[20px]">search</span>
+                    </div>
+                    <input type="text" id="admin-search-kardex" placeholder="Buscar produto..." class="block w-full pl-10 pr-3 py-2.5 border border-border-dynamic/50 rounded-xl bg-surface-dynamic border-border-dynamic text-main placeholder-text-muted focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-sm">
+                  </div>
+                </div>
+                
+                <div class="overflow-x-auto border border-border-dynamic/30 rounded-xl">
+                  <table class="w-full text-left responsive-table border-collapse">
+                    <thead class="bg-surface-dynamic">
+                      <tr class="text-muted text-xs uppercase tracking-wider border-b border-border-dynamic/50">
+                        <th class="p-4 font-medium" data-sortable>Data Hora</th>
+                        <th class="p-4 font-medium" data-sortable>Referência</th>
+                        <th class="p-4 font-medium" data-sortable>Natureza Fiscal</th>
+                        <th class="p-4 font-medium" data-sortable>Qtd (Movimento)</th>
+                        <th class="p-4 font-medium" data-sortable>Balanço Final</th>
+                      </tr>
+                    </thead>
+                    <tbody id="admin-kardex-table" class="text-sm divide-y divide-border-dynamic/30">
+                       <tr><td colspan="5" class="p-6 text-center text-muted">Buscando histórico de estoque...</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+             </div>
+          </section>
+        </div>
+      </div>
+
+      <!-- Modal Ver Pedido -->
+      <div id="order-details-modal" class="fixed inset-0 z-[99999] flex justify-center items-center bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300" style="display: flex;">
+        <div class="glass-panel p-4 sm:p-8 rounded-2xl w-full max-w-3xl transform scale-95 transition-transform duration-300 mx-2 sm:mx-4 flex flex-col shadow-2xl overflow-hidden relative" style="background: hsl(var(--bg-secondary)); max-height: calc(100vh - 2rem);">
+          
+          <div class="shrink-0 flex items-start sm:items-center justify-between gap-4 mb-4 sm:mb-6 pb-4 border-b border-border-dynamic/30 sticky top-0 bg-secondary/95 backdrop-blur z-10 w-full pr-1">
+             <div class="flex-1 pr-4 sm:pr-0">
+                <h3 class="text-xl sm:text-2xl font-bold text-main break-words" id="modal-order-id">Pedido #000...</h3>
+                <p class="text-xs sm:text-sm text-muted mt-1" id="modal-order-date">Realizado em: --/--/----</p>
+             </div>
+             
+             <button id="btn-close-order-modal" class="btn btn-icon btn-sm shrink-0 flex items-center justify-center p-2 rounded-full hover:bg-white/10" onclick="document.getElementById('order-details-modal').classList.remove('opacity-100', 'pointer-events-auto'); document.getElementById('order-details-modal').classList.add('opacity-0', 'pointer-events-none');" style="width: 36px; height: 36px;">
+                 <span class="material-symbols-outlined">close</span>
+             </button>
+          </div>
+          
+          <div class="overflow-y-auto overflow-x-hidden flex-1 p-1">
+              <div class="mb-4">
+                  <h4 class="font-bold text-main mb-2">Resumo de Itens</h4>
+                  <div class="overflow-x-auto border border-border-dynamic/30 rounded-xl">
+                      <table class="w-full text-left responsive-table border-collapse">
+                          <thead class="bg-surface-dynamic">
+                              <tr class="text-muted text-xs uppercase tracking-wider border-b border-border-dynamic/50">
+                                  <th class="p-4 font-medium">Produto</th>
+                                  <th class="p-4 font-medium text-center">Qtd</th>
+                                  <th class="p-4 font-medium text-right">Preço Unit.</th>
+                                  <th class="p-4 font-medium text-right">Subtotal</th>
+                              </tr>
+                          </thead>
+                          <tbody id="modal-order-items" class="text-sm divide-y divide-border-dynamic/30">
+                              <tr><td colspan="4" class="p-6 text-center text-muted">Carregando itens...</td></tr>
+                          </tbody>
+                      </table>
+                  </div>
+              </div>
+
+              <div class="flex justify-end pt-4 border-t border-border-dynamic/30 mt-4">
+                  <div class="text-right">
+                      <p class="text-sm text-muted mb-1">Total do Pedido</p>
+                      <h4 class="text-2xl font-bold text-primary" id="modal-order-total">R$ 0,00</h4>
+                  </div>
+              </div>
+          </div>
+
+        </div>
+      </div>
+
+
+
+
+

@@ -1,0 +1,139 @@
+import { supabase } from '../lib/supabase.js';
+import { showDialog } from '../ui/dialog.js';
+
+export async function loadUserProfile() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return null;
+
+    try {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+        if (error) throw error;
+        return data;
+    } catch (err) {
+        console.error("Erro ao puxar perfil:", err);
+        return null;
+    }
+}
+
+export async function setupProfile() {
+    const profileForm = document.getElementById('profile-form');
+    if (!profileForm) return;
+
+    // Máscara Telefone
+    const profPhone = document.getElementById('prof-phone');
+    if (profPhone) {
+        profPhone.addEventListener('input', (e) => {
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,2})(\d{0,5})(\d{0,4})/);
+            e.target.value = !x[2] ? x[1] : '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+        });
+    }
+
+    // Máscara CEP 
+    const profZip = document.getElementById('prof-zipcode');
+    if (profZip) {
+        profZip.addEventListener('input', (e) => {
+            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,5})(\d{0,3})/);
+            e.target.value = !x[2] ? x[1] : x[1] + '-' + x[2];
+        });
+    }
+
+    profileForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btnSubmit = document.getElementById('btn-submit-profile');
+
+        const full_name = document.getElementById('prof-name').value;
+        const phone = document.getElementById('prof-phone').value;
+        const zipcode = document.getElementById('prof-zipcode').value;
+        const address = document.getElementById('prof-address').value;
+        const city = document.getElementById('prof-city').value;
+
+        btnSubmit.classList.add('btn-loading');
+        btnSubmit.disabled = true;
+
+        const { data: { session } } = await supabase.auth.getSession();
+
+        if (!session) {
+            showDialog("Erro de Acesso", "Você foi deslogado. Relogue e tente novamente.", true);
+            return;
+        }
+
+        try {
+            const { error } = await supabase.from('profiles').update({
+                full_name,
+                phone,
+                zipcode,
+                address,
+                city
+            }).eq('id', session.user.id);
+
+            if (error) throw error;
+
+            showDialog("Sucesso", "Suas informações foram atualizadas com sucesso!", false);
+
+            // Re-update dashboard name
+            const dashName = document.getElementById('dash-user-name');
+            if (dashName) dashName.textContent = full_name;
+
+        } catch (err) {
+            console.error("Update profile error", err);
+            showDialog("Erro ao Salvar", "Não foi possível atualizar: " + err.message, true);
+        } finally {
+            btnSubmit.disabled = false;
+            btnSubmit.classList.remove('btn-loading');
+        }
+    });
+}
+
+export async function loadAdminUsers() {
+    const tableBody = document.getElementById('admin-users-table');
+    if (!tableBody) return;
+
+    tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 1rem;">Carregando usuários...</td></tr>';
+
+    try {
+        const { data: users, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .order('full_name', { ascending: true });
+
+        if (error) throw error;
+
+        if (!users || users.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Nenhum usuário encontrado.</td></tr>';
+            return;
+        }
+
+        tableBody.innerHTML = '';
+
+        users.forEach(user => {
+            const row = document.createElement('tr');
+            row.className = 'admin-product-row';
+            row.style.borderBottom = '1px solid hsl(var(--text-secondary)/0.1)';
+
+            const addressDisplay = user.address
+                ? `${user.address}${user.zipcode ? `, CEP: ${user.zipcode}` : ''}${user.city ? ` - ${user.city}` : ''}`
+                : '<span style="color: hsl(var(--text-secondary)/0.5)">Não informado</span>';
+
+            const roleLabel = user.role === 'administrador'
+                ? '<span class="product-tag" style="position:static; background:hsl(var(--primary));">Admin</span>'
+                : (user.role === 'vendedor' ? '<span class="product-tag" style="position:static; background:hsl(var(--accent-color));">Vendedor</span>' : 'Comprador');
+
+            row.innerHTML = `
+                <td data-label="Nome do Cliente" style="padding: 0.8rem 0; font-weight: 600;">${user.full_name}</td>
+                <td data-label="Telefone" style="padding: 0.8rem 0;">${user.phone || ' - '}</td>
+                <td data-label="Endereço Completo" style="padding: 0.8rem 0; font-size: 0.9rem; max-width: 300px;">${addressDisplay}</td>
+                <td data-label="Tipo" style="padding: 0.8rem 0;">${roleLabel}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+    } catch (err) {
+        console.error("Erro ao carregar usuários admin:", err);
+        tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Erro ao buscar dados. Tente novamente.</td></tr>';
+    }
+}

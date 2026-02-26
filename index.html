@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Loja de Produtos - Confec√ß√µes, Acess√≥rios e Perfumaria</title>
+    
+    <!-- Google Fonts: Outfit (Tipografia Premium) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    
+    <!-- Tailwind CSS Engine (do layout Stitch Premium) -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "hsl(var(--accent-color))",
+                        "primary-hover": "hsl(var(--accent-dark))",
+                        "surface-dynamic": "rgb(var(--tw-surface) / <alpha-value>)",
+                        "border-dynamic": "rgb(var(--tw-border) / <alpha-value>)",
+                        "text-main": "rgb(var(--tw-text-main) / <alpha-value>)",
+                        "text-muted": "rgb(var(--tw-text-muted) / <alpha-value>)",
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                    }
+                },
+            },
+        }
+    </script>
+
+    <!-- CSS Principal antecipado para evitar FOUC -->
+    <link rel="stylesheet" href="/src/style.css">
+
+    <!-- Flatpickr (Calend√°rio Premium / Otimizado PT-BR) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/dark.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/pt.js"></script>
+
+    <!-- ApexCharts (Gr√°ficos Dashboard) -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.1/dist/apexcharts.min.js"></script>
+
+    <style>
+      /* Estilos cr√≠ticos para o Loader inicial (evita tela branca/sem estilo) */
+      .loading-overlay {
+        position: fixed;
+        inset: 0;
+        background-color: #030406; /* Cor escura do seu tema */
+        z-index: 99999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: opacity 0.5s ease;
+      }
+      .loader {
+        width: 48px;
+        height: 48px;
+        border: 4px solid rgba(255, 255, 255, 0.1);
+        border-top-color: #6432ff; /* Sua cor prim√°ria */
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+  </head>
+  <body>
+    <!-- Overlay de Carregamento Inicial -->
+    <div id="loading-overlay" class="loading-overlay">
+      <div class="loader"></div>
+    </div>
+
+    <!-- Ponto de Montagem dos Componentes -->
+    <div id="app"></div>
+
+    <!-- Firebase/Supabase/Logics -->
+    
+    <script type="module" src="/src/main.js"></script>
+  
+    <!-- Script de OrdenaÁ„o Universal de Tabelas -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        // Encontra todos os cabeÁalhos de tabela que receberam o atributo
+        document.querySelectorAll('th[data-sortable]').forEach(th => {
+          th.addEventListener('click', () => {
+            const table = th.closest('table');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            // Descobre o index da coluna clicada
+            const index = Array.from(th.parentNode.children).indexOf(th);
+            
+            // Descobre se j· est· crescente ou decrescente
+            const isAsc = th.classList.contains('sort-asc');
+            const direction = isAsc ? -1 : 1;
+            
+            // Remove as classes de ordem de todas as outras colunas
+            table.querySelectorAll('th').forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
+            
+            // Aplica a classe certa na clicada
+            th.classList.add(isAsc ? 'sort-desc' : 'sort-asc');
+            
+            // Faz a ordenaÁ„o m·gica Javascript
+            const sortedRows = rows.sort((a, b) => {
+              const aCol = a.children[index]?.textContent?.trim() || '';
+              const bCol = b.children[index]?.textContent?.trim() || '';
+              
+              // Tenta converter pra numero (tira R$, pontos, letreiros)
+              const cleanA = aCol.replace(/[R$\s\.]/g, '').replace(',', '.');
+              const cleanB = bCol.replace(/[R$\s\.]/g, '').replace(',', '.');
+              
+              // Se os dois viraram n˙mero v·lido, ordena como numero
+              if (!isNaN(parseFloat(cleanA)) && !isNaN(parseFloat(cleanB))) {
+                  return (parseFloat(cleanA) - parseFloat(cleanB)) * direction;
+              }
+              
+              // Se n„o, caiu pra texto normal (A-Z)
+              return aCol.localeCompare(bCol, 'pt-BR', { numeric: true }) * direction;
+            });
+            
+            // Reescreve a tabela ordenada
+            tbody.append(...sortedRows);
+          });
+        });
+      });
+    </script>
+</body>
+</html>
+
+

@@ -1,0 +1,93 @@
+    <div id="product-modal" class="modal-overlay">
+      <div class="modal-content glass-card" style="max-width: 600px;">
+        <button id="btn-close-product-modal" class="btn-close" aria-label="Fechar">&times;</button>
+        
+        <div class="modal-header">
+          <h2 id="modal-product-title">Novo Produto</h2>
+          <p id="modal-product-subtitle">Adicione ou edite um item do catálogo</p>
+        </div>
+
+        <form id="product-form" class="auth-form active" style="margin-top: 1rem;">
+          <!-- Campo invisível para guardar ID em Edição -->
+          <input type="hidden" id="prod-id" value="">
+          
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+            <div class="form-group" style="grid-column: 1/-1;">
+              <label for="prod-name">Nome do Produto</label>
+              <input type="text" id="prod-name" placeholder="Ex: Camiseta Básica" required>
+            </div>
+            
+            <div class="form-group">
+              <label for="prod-price">Preço PIX (Base R$)</label>
+              <input type="text" id="prod-price" placeholder="R$ 0,00" value="" required>
+            </div>
+
+            <div class="form-group">
+              <label for="prod-credit-price">Preço Cartão (R$)</label>
+              <input type="text" id="prod-credit-price" placeholder="R$ 0,00" value="">
+            </div>
+
+            <div class="form-group">
+              <label for="prod-cost-price">Preço de Custo (R$)</label>
+              <input type="text" id="prod-cost-price" placeholder="R$ 0,00" value="" title="Usado apenas internamente para relatório de lucros">
+            </div>
+
+            <div class="form-group">
+              <label for="prod-installments">Limite de Parcelas</label>
+              <input type="number" id="prod-installments" placeholder="Ex: 12" min="1" max="24" value="1">
+            </div>
+
+            <div class="form-group">
+              <label for="prod-card-brands">Bandeiras Cartão</label>
+              <input type="text" id="prod-card-brands" placeholder="Ex: VISA, MASTERCARD" value="VISA, MASTERCARD">
+            </div>
+
+            <div class="form-group">
+              <label for="prod-stock">Estoque Inicial</label>
+              <input type="number" id="prod-stock" placeholder="Ex: 10" min="0" value="0">
+            </div>
+
+            <div class="form-group">
+              <label for="prod-dept">Departamento</label>
+              <select id="prod-dept" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid hsl(var(--text-secondary)/0.3); background: hsl(var(--bg-secondary)); color: hsl(var(--text-primary));">
+                <option value="vestuario">Vestuário</option>
+                <option value="acessorios">Acessórios</option>
+                <option value="perfumaria">Perfumaria</option>
+                <option value="cosmeticos">Cosméticos</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="prod-gender">Gênero</label>
+              <select id="prod-gender" required style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid hsl(var(--text-secondary)/0.3); background: hsl(var(--bg-secondary)); color: hsl(var(--text-primary));">
+                <option value="unissex">Unissex</option>
+                <option value="masculino">Masculino</option>
+                <option value="feminino">Feminino</option>
+                <option value="infantil">Infantil</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="prod-tag">Etiqueta de Destaque</label>
+              <input type="text" id="prod-tag" placeholder="Ex: Oferta, Novo, 20% OFF">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 1rem;">
+            <label for="prod-image-file">Imagens do Produto (Até 4 fotos)</label>
+            <input type="file" id="prod-image-file" accept="image/*" multiple style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid hsl(var(--text-secondary)/0.3); background: hsl(var(--bg-secondary)); color: hsl(var(--text-primary)); cursor: pointer;">
+            <input type="hidden" id="prod-image-url" value="">
+            <small id="prod-image-hint" style="color: hsl(var(--text-secondary)); font-size: 0.8rem; display: block; margin-top: 0.3rem;">Deixe vazio caso queira manter as imagens originais na Edição.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="prod-desc">Descrição Opcional</label>
+            <textarea id="prod-desc" rows="3" placeholder="Fale sobre o produto..." style="width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid hsl(var(--text-secondary)/0.3); background: hsl(var(--bg-secondary)); color: hsl(var(--text-primary));"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-full" id="btn-submit-product">Adicionar ao Catálogo</button>
+          
+          <div id="product-alert" class="alert hidden" style="margin-top: 1rem;"></div>
+        </form>
+      </div>
+    </div>
