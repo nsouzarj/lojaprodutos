@@ -1,4 +1,4 @@
-      <div id="view-dashboard" class="container mx-auto px-4 md:px-6 lg:px-8" style="display: none; padding-top: 40px; padding-bottom: 60px; min-height: 80vh;">
+      <div id="view-dashboard" class="container mx-auto px-4 md:px-6 lg:px-8 pt-10 pb-[60px] min-h-[80vh]" style="display: none;">
         
         <!-- Welcome Header -->
         <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
@@ -25,12 +25,12 @@
             <div class="glass-panel rounded-2xl p-4 flex flex-col gap-1 dash-nav">
                 <p class="px-4 py-2 text-xs font-bold text-muted uppercase tracking-wider">Menu Principal</p>
                 
-                <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn active" data-target="dash-pedidos" style="border: none; text-align: left; background: transparent;">
+                <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn active border-0 text-left bg-transparent" data-target="dash-pedidos">
                     <span class="material-symbols-outlined group-hover:text-primary transition-colors">shopping_bag</span>
                     Minhas Compras
                 </button>
                 
-                <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn" data-target="dash-perfil" style="border: none; text-align: left; background: transparent;">
+                <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn border-0 text-left bg-transparent" data-target="dash-perfil">
                     <span class="material-symbols-outlined group-hover:text-primary transition-colors">person</span>
                     Meu Perfil
                 </button>
@@ -40,27 +40,27 @@
                     <div class="h-px bg-border-dark w-full my-4"></div>
                     <p class="px-4 py-2 text-xs font-bold text-muted uppercase tracking-wider">Gestão do Lojista</p>
                     
-                    <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn" data-target="dash-produtos" style="border: none; text-align: left; background: transparent;">
+                    <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn border-0 text-left bg-transparent" data-target="dash-produtos">
                         <span class="material-symbols-outlined group-hover:text-primary transition-colors">inventory_2</span>
                         Catálogo e Estoque
                     </button>
                     
-                    <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn" data-target="dash-vendas" style="border: none; text-align: left; background: transparent;">
+                    <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn border-0 text-left bg-transparent" data-target="dash-vendas">
                         <span class="material-symbols-outlined group-hover:text-primary transition-colors">attach_money</span>
                         Vendas e Financeiro
                     </button>
                     
-                    <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn" data-target="dash-movimentacoes" style="border: none; text-align: left; background: transparent;">
+                    <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn border-0 text-left bg-transparent" data-target="dash-movimentacoes">
                         <span class="material-symbols-outlined group-hover:text-primary transition-colors">sync_alt</span>
                         Movimentações
                     </button>
 
-                    <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn" data-target="dash-clientes" style="border: none; text-align: left; background: transparent;">
+                    <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn border-0 text-left bg-transparent" data-target="dash-clientes">
                         <span class="material-symbols-outlined group-hover:text-primary transition-colors">group</span>
                         Clientes
                     </button>
 
-                    <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn" data-target="dash-relatorios" style="border: none; text-align: left; background: transparent;">
+                    <button class="flex w-full items-center gap-3 px-4 py-3 rounded-xl text-muted hover:text-primary hover:bg-primary/10 transition-all group dash-btn border-0 text-left bg-transparent" data-target="dash-relatorios">
                         <span class="material-symbols-outlined group-hover:text-primary transition-colors">bar_chart</span>
                         Relatórios
                     </button>
@@ -299,7 +299,7 @@
 
       <!-- Modal Ver Pedido -->
       <div id="order-details-modal" class="fixed inset-0 z-[99999] flex justify-center items-center bg-black/60 backdrop-blur-sm opacity-0 pointer-events-none transition-opacity duration-300" style="display: flex;">
-        <div class="glass-panel p-4 sm:p-8 rounded-2xl w-full max-w-3xl transform scale-95 transition-transform duration-300 mx-2 sm:mx-4 flex flex-col shadow-2xl overflow-hidden relative" style="background: hsl(var(--bg-secondary)); max-height: calc(100vh - 2rem);">
+        <div class="glass-panel p-4 sm:p-8 rounded-2xl w-full max-w-3xl transform scale-95 transition-transform duration-300 mx-2 sm:mx-4 flex flex-col shadow-2xl overflow-hidden relative bg-secondary max-h-[calc(100vh-2rem)]">
           
           <div class="shrink-0 flex items-start sm:items-center justify-between gap-4 mb-4 sm:mb-6 pb-4 border-b border-border-dynamic/30 sticky top-0 bg-secondary/95 backdrop-blur z-10 w-full pr-1">
              <div class="flex-1 pr-4 sm:pr-0">
@@ -307,7 +307,7 @@
                 <p class="text-xs sm:text-sm text-muted mt-1" id="modal-order-date">Realizado em: --/--/----</p>
              </div>
              
-             <button id="btn-close-order-modal" class="btn btn-icon btn-sm shrink-0 flex items-center justify-center p-2 rounded-full hover:bg-white/10" onclick="document.getElementById('order-details-modal').classList.remove('opacity-100', 'pointer-events-auto'); document.getElementById('order-details-modal').classList.add('opacity-0', 'pointer-events-none');" style="width: 36px; height: 36px;">
+             <button id="btn-close-order-modal" class="btn btn-icon btn-sm shrink-0 flex items-center justify-center p-2 rounded-full hover:bg-white/10 w-[36px] h-[36px]" onclick="document.getElementById('order-details-modal').classList.remove('opacity-100', 'pointer-events-auto'); document.getElementById('order-details-modal').classList.add('opacity-0', 'pointer-events-none');">
                  <span class="material-symbols-outlined">close</span>
              </button>
           </div>

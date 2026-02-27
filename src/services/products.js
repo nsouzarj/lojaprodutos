@@ -26,7 +26,7 @@ export async function renderProducts(categoryFilter = 'todos', tagFilter = null)
     const container = document.getElementById('featured-products');
     if (!container) return;
 
-    container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 2rem;">Carregando ${tagFilter ? 'Ofertas' : 'Produtos'}...</div>`;
+    container.innerHTML = `<div class="col-span-full text-center p-8">Carregando ${tagFilter ? 'Ofertas' : 'Produtos'}...</div>`;
 
     try {
         let query = supabase.from('products').select('*');
@@ -60,7 +60,7 @@ export async function renderProducts(categoryFilter = 'todos', tagFilter = null)
             });
 
             if (filteredMocks.length === 0 && tagFilter) {
-                container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem;">Nenhuma oferta encontrada no momento.</div>';
+                container.innerHTML = '<div class="col-span-full text-center p-8">Nenhuma oferta encontrada no momento.</div>';
                 return;
             }
 
@@ -101,22 +101,21 @@ function renderCards(containerElement, productsArray) {
         const card = document.createElement('article');
         card.className = `product-card ${isOutOfStock ? 'out-of-stock' : ''}`;
         card.innerHTML = `
-      <div class="product-image" style="background-image: url('${mainImg}'); background-size: contain; background-repeat: no-repeat; background-position: center; background-color: #fff; cursor: pointer; ${isOutOfStock ? 'filter: grayscale(1); opacity: 0.7; pointer-events: none;' : ''}" title="${isOutOfStock ? 'Indisponível' : 'Ver fotos'}">
+      <div class="product-image bg-contain bg-no-repeat bg-center cursor-pointer ${isOutOfStock ? 'grayscale opacity-70 pointer-events-none' : ''}" style="background-image: url('${mainImg}')" title="${isOutOfStock ? 'Indisponível' : 'Ver fotos'}">
         ${product.tag ? `<span class="product-tag">${product.tag}</span>` : ''}
-        ${isOutOfStock ? `<div class="out-of-stock-badge" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.4); color: white; font-weight: 800; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 1px; backdrop-filter: blur(2px);">Esgotado</div>` : ''}
+        ${isOutOfStock ? `<div class="absolute inset-0 flex items-center justify-center bg-black/40 text-white font-extrabold text-[1.2rem] uppercase tracking-widest backdrop-blur-[2px]">Esgotado</div>` : ''}
       </div>
       <div class="product-info">
-        <span class="product-category" style="text-transform: capitalize;">${catLabel}</span>
-        <h3 class="product-name" style="${isOutOfStock ? 'color: hsl(var(--text-secondary));' : ''}">${product.name}</h3>
+        <span class="product-category capitalize">${catLabel}</span>
+        <h3 class="product-name ${isOutOfStock ? 'text-muted' : ''}">${product.name}</h3>
         
-        <div class="product-rating" id="card-rating-${product.id}" style="display:flex; align-items:center; gap:0.3rem; margin: 0.3rem 0; font-size: 0.85rem; color: #fbbf24;">
-            <span style="color: hsl(var(--text-secondary)/0.3);">Carregando notas...</span>
+        <div class="product-rating flex items-center gap-[0.3rem] my-[0.3rem] text-[0.85rem] text-yellow-400" id="card-rating-${product.id}">
+            <span class="text-muted/30">Carregando notas...</span>
         </div>
 
-        <p class="product-price" style="${isOutOfStock ? 'text-decoration: line-through; opacity: 0.5;' : ''}">${formattedPrice}</p>
-        <button class="btn btn-primary btn-full btn-add-cart" 
+        <p class="product-price ${isOutOfStock ? 'line-through opacity-50' : ''}">${formattedPrice}</p>
+        <button class="btn btn-primary btn-full btn-add-cart mt-2 ${isOutOfStock ? '!bg-slate-400 cursor-not-allowed transform-none shadow-none' : ''}" 
                 data-id="${product.id}" 
-                style="margin-top: 0.5rem; ${isOutOfStock ? 'background: #94a3b8; cursor: not-allowed; transform: none; box-shadow: none;' : ''}"
                 ${isOutOfStock ? 'disabled' : ''}>
           ${isOutOfStock ? 'Indisponível' : 'Comprar'}
         </button>
@@ -151,10 +150,10 @@ async function renderCardRating(productId) {
 
     let starsHtml = '';
     for (let i = 1; i <= 5; i++) {
-        starsHtml += (i <= avg) ? '<span>★</span>' : '<span style="color: hsl(var(--text-secondary)/0.3);">★</span>';
+        starsHtml += (i <= avg) ? '<span>★</span>' : '<span class="text-muted/30">★</span>';
     }
 
-    starsHtml += `<span style="color: hsl(var(--text-secondary)); font-size: 0.75rem; margin-left: 0.2rem;">(${ratingData.count} avaliações)</span>`;
+    starsHtml += `<span class="text-muted text-[0.75rem] ml-1">(${ratingData.count} avaliações)</span>`;
     ratingContainer.innerHTML = starsHtml;
 }
 
@@ -297,7 +296,7 @@ export async function loadAdminProducts() {
     const tableBody = document.getElementById('admin-products-table');
     if (!tableBody) return;
 
-    tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 1rem;">Carregando dados reais do Banco...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4">Carregando dados reais do Banco...</td></tr>';
 
     const { data: adminProducts, error } = await supabase
         .from('products')
@@ -305,12 +304,12 @@ export async function loadAdminProducts() {
         .order('created_at', { ascending: false });
 
     if (error || !adminProducts) {
-        tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:red;">Erro ao buscar catálogo.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-red-500">Erro ao buscar catálogo.</td></tr>';
         return;
     }
 
     if (adminProducts.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhum produto cadastrado ainda.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum produto cadastrado ainda.</td></tr>';
         return;
     }
 
@@ -320,7 +319,7 @@ export async function loadAdminProducts() {
         const priceFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(prod.price);
         const costFmt = prod.cost_price
             ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(prod.cost_price)
-            : '<span style="color: hsl(var(--text-secondary)); font-size: 0.8rem;">Não info.</span>';
+            : '<span class="text-muted text-[0.8rem]">Não info.</span>';
 
         // Passando raw data para edição em stringfy e setando no dataset da linha ou botao
         const prodDataStr = encodeURIComponent(JSON.stringify(prod));
@@ -328,19 +327,19 @@ export async function loadAdminProducts() {
         const mainImg = (prod.image_url || '').split(',')[0] || 'https://placehold.co/400x400/f8fafc/94a3b8?text=Sem+Foto';
 
         tableBody.innerHTML += `
-         <tr class="admin-product-row" style="border-bottom: 1px solid hsl(var(--text-secondary)/0.1);">
-            <td data-label="Foto" style="padding: 0.5rem 0;">
-               <img src="${mainImg}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: contain; background-color:#fff;" />
+         <tr class="admin-product-row border-b border-[hsl(var(--text-secondary)/0.1)]">
+            <td data-label="Foto" class="py-2">
+               <img src="${mainImg}" class="w-10 h-10 rounded object-contain bg-white" />
             </td>
-            <td data-label="Nome" class="prod-search-name" style="padding: 0.5rem 0; font-weight: bold;">${prod.name}</td>
-            <td data-label="Departamento" style="padding: 0.5rem 0; text-transform: capitalize;">${prod.department}</td>
-            <td data-label="Gênero" style="padding: 0.5rem 0; text-transform: capitalize;">${prod.gender}</td>
-            <td data-label="Venda" style="padding: 0.5rem 0;">${priceFmt}</td>
-            <td data-label="Custo" style="padding: 0.5rem 0; color: #4caf50;">${costFmt}</td>
-            <td data-label="Estoque" style="padding: 0.5rem 0; font-size: 0.85rem;">Estoque: ${prod.stock}</td>
-            <td data-label="Ações" style="padding: 0.5rem 0; text-align:right; display:flex; gap:0.5rem; justify-content:flex-end;">
-               <button class="btn btn-outline btn-restock-product" data-prod="${prodDataStr}" style="padding:0.25rem 0.5rem; font-size:0.8rem" title="Reposição de Estoque">📦 Repor</button>
-               <button class="btn btn-outline btn-edit-product" data-prod="${prodDataStr}" style="padding:0.25rem 0.5rem; font-size:0.8rem">Editar</button>
+            <td data-label="Nome" class="prod-search-name py-2 font-bold">${prod.name}</td>
+            <td data-label="Departamento" class="py-2 capitalize">${prod.department}</td>
+            <td data-label="Gênero" class="py-2 capitalize">${prod.gender}</td>
+            <td data-label="Venda" class="py-2">${priceFmt}</td>
+            <td data-label="Custo" class="py-2 text-[#4caf50]">${costFmt}</td>
+            <td data-label="Estoque" class="py-2 text-[0.85rem]">Estoque: ${prod.stock}</td>
+            <td data-label="Ações" class="py-2 text-right flex gap-2 justify-end">
+               <button class="btn btn-outline btn-restock-product px-2 py-1 text-[0.8rem]" data-prod="${prodDataStr}" title="Reposição de Estoque">📦 Repor</button>
+               <button class="btn btn-outline btn-edit-product px-2 py-1 text-[0.8rem]" data-prod="${prodDataStr}">Editar</button>
             </td>
          </tr>
       `;
@@ -769,7 +768,7 @@ export async function loadKardex() {
     const tableBody = document.getElementById('admin-kardex-table');
     if (!tableBody) return;
 
-    tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 1rem;">Carregando histórico...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="5" class="text-center p-4">Carregando histórico...</td></tr>';
 
     try {
         const { data: movements, error } = await supabase
@@ -784,7 +783,7 @@ export async function loadKardex() {
         if (error) throw error;
 
         if (!movements || movements.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Nenhuma movimentação registrada.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma movimentação registrada.</td></tr>';
             return;
         }
 
@@ -796,28 +795,28 @@ export async function loadKardex() {
                 hour: '2-digit', minute: '2-digit'
             }).format(new Date(mov.created_at));
 
-            // Tratamento de cores condicional
-            let colorStr = 'color: inherit;';
+            // Tratamento de classes CSS condicional
+            let colorClass = '';
             let sign = '';
             if (mov.quantity > 0) {
-                colorStr = 'color: #4caf50; font-weight: bold;'; // Verde
+                colorClass = 'text-[#4caf50] font-bold'; // Verde
                 sign = '+';
             } else if (mov.quantity < 0) {
-                colorStr = 'color: #f44336; font-weight: bold;'; // Vermelho
+                colorClass = 'text-[#f44336] font-bold'; // Vermelho
             }
 
             const prodName = mov.products ? mov.products.name : 'Produto Excluído';
 
             tableBody.innerHTML += `
-             <tr class="kardex-row" style="border-bottom: 1px solid hsl(var(--text-secondary)/0.1);">
-                <td data-label="Data / Hora" style="padding: 0.8rem 0; font-size: 0.85rem;">${dateFmt}</td>
-                <td data-label="Produto" class="kardex-search-name" style="padding: 0.8rem 0; font-weight: bold;">${prodName}</td>
-                <td data-label="Tipo" style="padding: 0.8rem 0; font-size: 0.85rem;">
-                   <span style="background: hsl(var(--text-secondary)/0.1); padding: 0.2rem 0.5rem; border-radius: 4px;">${mov.type.replace('_', ' ')}</span>
+             <tr class="kardex-row border-b border-[hsl(var(--text-secondary)/0.1)]">
+                <td data-label="Data / Hora" class="py-[0.8rem] text-[0.85rem]">${dateFmt}</td>
+                <td data-label="Produto" class="kardex-search-name py-[0.8rem] font-bold">${prodName}</td>
+                <td data-label="Tipo" class="py-[0.8rem] text-[0.85rem]">
+                   <span class="bg-[hsl(var(--text-secondary)/0.1)] px-2 py-1 rounded">${mov.type.replace('_', ' ')}</span>
                 </td>
-                <td data-label="(Qtd.)" style="padding: 0.8rem 0; ${colorStr}">${sign}${mov.quantity}</td>
-                <td data-label="Saldo Novo" style="padding: 0.8rem 0; font-size: 0.9rem;">
-                   <span style="color: hsl(var(--text-secondary)); font-size: 0.75rem;">(${mov.previous_stock} &rarr;)</span> 
+                <td data-label="(Qtd.)" class="py-[0.8rem] ${colorClass}">${sign}${mov.quantity}</td>
+                <td data-label="Saldo Novo" class="py-[0.8rem] text-[0.9rem]">
+                   <span class="text-muted text-[0.75rem]">(${mov.previous_stock} &rarr;)</span> 
                    <strong>${mov.current_stock}</strong>
                 </td>
              </tr>
@@ -845,6 +844,6 @@ export async function loadKardex() {
 
     } catch (err) {
         console.error("Erro Kardex:", err);
-        tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#f44336;">Erro ao buscar histórico.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-[#f44336]">Erro ao buscar histórico.</td></tr>';
     }
 }

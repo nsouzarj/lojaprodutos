@@ -11,11 +11,11 @@ export async function loadMyOrders() {
     const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
-        tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 1rem;">Faça login para ver suas compras.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-4">Faça login para ver suas compras.</td></tr>';
         return;
     }
 
-    tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 1rem;">Carregando histórico...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-4">Carregando histórico...</td></tr>';
 
     try {
         const { data: myOrders, error } = await supabase
@@ -27,7 +27,7 @@ export async function loadMyOrders() {
         if (error) throw error;
 
         if (myOrders.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:hsl(var(--text-secondary)); padding: 1rem;">Nenhum pedido realizado ainda.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted p-4">Nenhum pedido realizado ainda.</td></tr>';
             return;
         }
 
@@ -41,23 +41,23 @@ export async function loadMyOrders() {
 
             const priceFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total);
 
-            let statusColor = 'hsl(var(--text-secondary))';
-            if (order.status.toLowerCase() === 'pendente') statusColor = 'orange';
-            if (order.status.toLowerCase() === 'pago') statusColor = 'blue';
-            if (order.status.toLowerCase() === 'enviado') statusColor = 'purple';
-            if (order.status.toLowerCase() === 'entregue') statusColor = 'green';
-            if (order.status.toLowerCase() === 'cancelado') statusColor = 'red';
+            let statusClass = 'text-muted';
+            if (order.status.toLowerCase() === 'pendente') statusClass = 'text-orange-500';
+            if (order.status.toLowerCase() === 'pago') statusClass = 'text-blue-500';
+            if (order.status.toLowerCase() === 'enviado') statusClass = 'text-purple-500';
+            if (order.status.toLowerCase() === 'entregue') statusClass = 'text-green-500';
+            if (order.status.toLowerCase() === 'cancelado') statusClass = 'text-red-500';
 
             tableBody.innerHTML += `
-             <tr class="admin-product-row" style="border-bottom: 1px solid hsl(var(--text-secondary)/0.1);">
-                <td data-label="Nº Pedido" style="padding: 0.8rem 0; font-family: monospace;">#${order.id.toString().substring(0, 8)}</td>
-                <td data-label="Data" style="padding: 0.8rem 0;">${dateFmt}</td>
-                <td data-label="Destino" style="padding: 0.8rem 0; font-size: 0.85rem; max-width: 250px;">${order.delivery_address || 'Endereço não cadastrado'}</td>
-                <td data-label="Status" style="padding: 0.8rem 0; font-weight: bold; color: ${statusColor}; text-transform: capitalize;">${order.status}</td>
-                <td data-label="Total" style="padding: 0.8rem 0;">${priceFmt}</td>
-                <td data-label="Ação" style="padding: 0.8rem 0; display: flex; justify-content: flex-end;">
-                   <button onclick="window.viewOrderDetails('${order.id}')" class="btn btn-icon btn-sm" title="Ver Detalhes do Pedido" style="padding: 0.3rem 0.6rem; font-size: 0.75rem; border: none; background: transparent; color: hsl(var(--primary-color));">
-                       <span class="material-symbols-outlined" style="font-size: 20px;">visibility</span>
+             <tr class="admin-product-row border-b border-[hsl(var(--text-secondary)/0.1)]">
+                <td data-label="Nº Pedido" class="py-[0.8rem] font-mono">#${order.id.toString().substring(0, 8)}</td>
+                <td data-label="Data" class="py-[0.8rem]">${dateFmt}</td>
+                <td data-label="Destino" class="py-[0.8rem] text-[0.85rem] max-w-[250px]">${order.delivery_address || 'Endereço não cadastrado'}</td>
+                <td data-label="Status" class="py-[0.8rem] font-bold capitalize ${statusClass}">${order.status}</td>
+                <td data-label="Total" class="py-[0.8rem]">${priceFmt}</td>
+                <td data-label="Ação" class="py-[0.8rem] flex justify-end">
+                   <button onclick="window.viewOrderDetails('${order.id}')" class="btn btn-icon btn-sm p-1 px-2 text-xs border-0 bg-transparent text-primary" title="Ver Detalhes do Pedido">
+                       <span class="material-symbols-outlined text-[20px]">visibility</span>
                    </button>
                 </td>
              </tr>
@@ -65,7 +65,7 @@ export async function loadMyOrders() {
         });
     } catch (err) {
         console.error("Erro ao puxar histórico de pedidos:", err);
-        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red; padding: 1rem;">
+        tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 p-4">
             <strong>Erro ao carregar:</strong><br>
             <small>${err.message || 'Erro desconhecido'}</small>
         </td></tr>`;
@@ -133,21 +133,31 @@ window.viewOrderDetails = async function (orderId) {
 
         items.forEach(item => {
             const prodName = item.products ? item.products.name : 'Produto Indisponível';
-            const prodImg = item.products && item.products.image_url ? item.products.image_url : '/not-found.jpg';
+
+            // Trata caso a imagem seja uma Galeria (urls separadas por vírgula)
+            let prodImg = '/not-found.jpg';
+            if (item.products && item.products.image_url) {
+                const imgStr = String(item.products.image_url);
+                const imgArray = imgStr.split(',').filter(url => url.trim() !== '');
+                if (imgArray.length > 0) {
+                    prodImg = imgArray[0].trim();
+                }
+            }
+
             const unitPrice = item.price_at_time;
             const subtotal = unitPrice * item.quantity;
 
             tbody.innerHTML += `
-                <tr style="border-bottom: 1px solid hsl(var(--text-secondary)/0.1);">
-                    <td data-label="Produto" style="padding: 1rem 0;">
+                <tr class="border-b border-[hsl(var(--text-secondary)/0.1)]">
+                    <td data-label="Produto" class="py-4">
                         <div class="flex items-center gap-3">
-                            <img src="${prodImg}" alt="${prodName}" class="w-10 h-10 object-cover rounded shadow-sm bg-border-dynamic" onerror="this.src='https://via.placeholder.com/40?text=S/Foto'">
+                            <img src="${prodImg}" alt="${prodName}" class="w-10 h-10 object-contain rounded shadow-sm bg-white" onerror="this.onerror=null; this.src='https://placehold.co/40x40/f1f5f9/94a3b8?text=Sem+Foto'">
                             <span class="font-medium">${prodName}</span>
                         </div>
                     </td>
-                    <td data-label="Qtd" style="padding: 1rem 0;" class="text-center">${item.quantity}un</td>
-                    <td data-label="Preço Unit." style="padding: 1rem 0;" class="text-right">${priceFmt(unitPrice)}</td>
-                    <td data-label="Subtotal" style="padding: 1rem 0; font-weight: bold;" class="text-right text-primary">${priceFmt(subtotal)}</td>
+                    <td data-label="Qtd" class="py-4 text-center">${item.quantity}un</td>
+                    <td data-label="Preço Unit." class="py-4 text-right">${priceFmt(unitPrice)}</td>
+                    <td data-label="Subtotal" class="py-4 font-bold text-right text-primary">${priceFmt(subtotal)}</td>
                 </tr>
             `;
         });
@@ -204,7 +214,7 @@ export async function loadAdminOrders() {
 
         if (tableBody) {
             if (!allOrders || allOrders.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Nenhuma venda registrada.</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhuma venda registrada.</td></tr>';
                 return;
             }
 
@@ -213,13 +223,12 @@ export async function loadAdminOrders() {
                 const priceFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total);
 
                 const row = document.createElement('tr');
-                row.className = 'admin-product-row';
-                row.style.borderBottom = '1px solid hsl(var(--text-secondary)/0.1)';
+                row.className = 'admin-product-row border-b border-[hsl(var(--text-secondary)/0.1)]';
                 row.innerHTML = `
-                    <td data-label="Nº Pedido" style="padding: 0.8rem 0; font-family: monospace; font-size: 0.75rem;">#${order.id.toString().substring(0, 8)}</td>
-                    <td data-label="Cliente" style="padding: 0.8rem 0;">${order.profiles ? order.profiles.full_name : 'Anônimo'}</td>
-                    <td data-label="Status" style="padding: 0.8rem 0;">
-                        <select id="status-select-${order.id}" style="padding: 0.3rem; border-radius: 4px; border: 1px solid hsl(var(--text-secondary)/0.3); background: transparent; color: inherit; font-size: 0.85rem;">
+                    <td data-label="Nº Pedido" class="py-[0.8rem] font-mono text-[0.75rem]">#${order.id.toString().substring(0, 8)}</td>
+                    <td data-label="Cliente" class="py-[0.8rem]">${order.profiles ? order.profiles.full_name : 'Anônimo'}</td>
+                    <td data-label="Status" class="py-[0.8rem]">
+                        <select id="status-select-${order.id}" class="p-1 rounded bg-transparent text-inherit text-[0.85rem] border border-[hsl(var(--text-secondary)/0.3)]">
                             <option value="pendente" ${order.status === 'pendente' ? 'selected' : ''}>Pendente</option>
                             <option value="pago" ${order.status === 'pago' ? 'selected' : ''}>Pago</option>
                             <option value="enviado" ${order.status === 'enviado' ? 'selected' : ''}>Enviado</option>
@@ -227,11 +236,11 @@ export async function loadAdminOrders() {
                             <option value="cancelado" ${order.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
                         </select>
                     </td>
-                    <td data-label="Total" style="padding: 0.8rem 0; font-weight: bold;">${priceFmt}</td>
-                    <td data-label="Ações" style="padding: 0.8rem 0; display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center; flex-wrap: wrap;">
-                        <button onclick="window.viewOrderDetails('${order.id}')" class="btn btn-icon btn-sm" title="Ver Detalhes do Pedido" style="padding: 0.3rem; border: none; background: transparent; color: hsl(var(--primary-color)); font-size: 0.75rem;"><span class="material-symbols-outlined" style="font-size: 20px;">visibility</span></button>
-                        <button onclick="window.updateOrderStatus('${order.id}', this)" class="btn btn-outline btn-sm" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">Atualizar</button>
-                        ${order.status === 'cancelado' ? `<button onclick="window.deleteOrder('${order.id}', this)" class="btn btn-icon btn-sm" style="background: rgba(255, 51, 102, 0.1); color: #ff3366; border: none; padding: 0.3rem;" title="Excluir Pedido"><span class="material-symbols-outlined" style="font-size: 18px;">delete</span></button>` : ''}
+                    <td data-label="Total" class="py-[0.8rem] font-bold">${priceFmt}</td>
+                    <td data-label="Ações" class="py-[0.8rem] flex gap-2 justify-end items-center flex-wrap">
+                        <button onclick="window.viewOrderDetails('${order.id}')" class="btn btn-icon btn-sm p-1 border-0 bg-transparent text-primary text-[0.75rem]" title="Ver Detalhes do Pedido"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+                        <button onclick="window.updateOrderStatus('${order.id}', this)" class="btn btn-outline btn-sm p-1 px-2 text-[0.75rem]">Atualizar</button>
+                        ${order.status === 'cancelado' ? `<button onclick="window.deleteOrder('${order.id}', this)" class="btn btn-icon btn-sm p-1 border-0 text-[#ff3366] bg-[#ff3366]/10" title="Excluir Pedido"><span class="material-symbols-outlined text-[18px]">delete</span></button>` : ''}
                     </td>
                 `;
                 tableBody.appendChild(row);
@@ -475,7 +484,7 @@ export async function loadAdminReports(startDate = '', endDate = '') {
         }
 
         reportPanel.innerHTML = `
-            <div style="display: flex; justify-content: flex-end; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <div class="flex justify-end items-center mb-6 flex-wrap gap-4">
                 
                 <div class="flex flex-col sm:flex-row items-center gap-3 bg-surface-dynamic p-3 rounded-xl border border-border-dynamic/30 w-full max-w-2xl justify-between">
                     <label class="text-sm text-muted font-medium w-full sm:w-auto mb-1 sm:mb-0">Período:</label>
@@ -487,77 +496,77 @@ export async function loadAdminReports(startDate = '', endDate = '') {
                     </div>
                     
                     <div class="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-                        <button id="btn-filter-reports" class="btn btn-outline btn-sm flex-1 sm:flex-none" style="padding: 0.5rem 1rem; font-size: 0.85rem;">Filtrar</button>
-                        ${(startDate || endDate) ? `<button id="btn-clear-reports" class="btn btn-sm" style="padding: 0.5rem; color: #ff3366; background: rgba(255, 51, 102, 0.1); border: none;" title="Limpar Filtro">✕</button>` : ''}
+                        <button id="btn-filter-reports" class="btn btn-outline btn-sm flex-1 sm:flex-none px-4 py-2 text-[0.85rem]">Filtrar</button>
+                        ${(startDate || endDate) ? `<button id="btn-clear-reports" class="btn btn-sm p-2 text-[#ff3366] bg-[#ff3366]/10 border-0" title="Limpar Filtro">✕</button>` : ''}
                     </div>
                 </div>
             </div>
             
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                <div class="glass-card" style="padding: 1.5rem; text-align: center; border-bottom: 4px solid hsl(var(--accent-color));">
-                    <p style="color: hsl(var(--text-secondary)); font-size: 0.85rem; text-transform: uppercase;">Receita Total Bruta</p>
-                    <h3 style="font-size: 1.5rem; margin-top: 0.5rem; color: hsl(var(--accent-color));">${priceFmt(totalSalesRevenue)}</h3>
-                    ${(startDate || endDate) ? `<small style="color: hsl(var(--text-secondary));">No período filtrado</small>` : ''}
+            <div class="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
+                <div class="glass-card p-6 text-center border-b-4 border-[hsl(var(--accent-color))]">
+                    <p class="text-muted text-[0.85rem] uppercase">Receita Total Bruta</p>
+                    <h3 class="text-[1.5rem] mt-2 text-[hsl(var(--accent-color))]">${priceFmt(totalSalesRevenue)}</h3>
+                    ${(startDate || endDate) ? `<small class="text-muted">No período filtrado</small>` : ''}
                 </div>
-                <div class="glass-card" style="padding: 1.5rem; text-align: center; border-bottom: 4px solid hsl(var(--accent-color));">
-                    <p style="color: hsl(var(--text-secondary)); font-size: 0.85rem; text-transform: uppercase;">Pedidos Validados</p>
-                    <h3 style="font-size: 1.5rem; margin-top: 0.5rem;">${totalOrdersCount}</h3>
+                <div class="glass-card p-6 text-center border-b-4 border-[hsl(var(--accent-color))]">
+                    <p class="text-muted text-[0.85rem] uppercase">Pedidos Validados</p>
+                    <h3 class="text-[1.5rem] mt-2">${totalOrdersCount}</h3>
                 </div>
-                <div class="glass-card" style="padding: 1.5rem; text-align: center; border-bottom: 4px solid #ff9800;">
-                    <p style="color: hsl(var(--text-secondary)); font-size: 0.85rem; text-transform: uppercase;">Mais Vendido Geral</p>
-                    <h3 style="font-size: 1rem; margin-top: 0.5rem;">${bestSellingProduct.name}</h3>
-                    <small style="color: hsl(var(--text-secondary));">${bestSellingProduct.qtd} unid. escoadas</small>
-                </div>
-            </div>
-
-            <div style="margin-top: 2rem;">
-                <h3 style="margin-bottom: 1rem;">Visão Financeira por Status (Funil)</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 1rem;">
-                    <div class="glass-card" style="padding: 1rem; text-align: center; border-left: 4px solid orange;">
-                        <span style="color: hsl(var(--text-secondary)); font-size: 0.75rem; text-transform: uppercase; font-weight: bold;">Pendente</span>
-                        <h3 style="margin-top: 0.5rem; font-size: 1.25rem;">${statusCounts.pendente}</h3>
-                        <p style="font-size: 0.85rem; font-weight: bold; margin-top: 0.3rem; color: orange;">${priceFmt(statusTotals.pendente)}</p>
-                    </div>
-                    <div class="glass-card" style="padding: 1rem; text-align: center; border-left: 4px solid #2196F3;">
-                        <span style="color: hsl(var(--text-secondary)); font-size: 0.75rem; text-transform: uppercase; font-weight: bold;">Pago</span>
-                        <h3 style="margin-top: 0.5rem; font-size: 1.25rem;">${statusCounts.pago}</h3>
-                        <p style="font-size: 0.85rem; font-weight: bold; margin-top: 0.3rem; color: #2196F3;">${priceFmt(statusTotals.pago)}</p>
-                    </div>
-                    <div class="glass-card" style="padding: 1rem; text-align: center; border-left: 4px solid #9C27B0;">
-                        <span style="color: hsl(var(--text-secondary)); font-size: 0.75rem; text-transform: uppercase; font-weight: bold;">Enviado</span>
-                        <h3 style="margin-top: 0.5rem; font-size: 1.25rem;">${statusCounts.enviado}</h3>
-                        <p style="font-size: 0.85rem; font-weight: bold; margin-top: 0.3rem; color: #9C27B0;">${priceFmt(statusTotals.enviado)}</p>
-                    </div>
-                    <div class="glass-card" style="padding: 1rem; text-align: center; border-left: 4px solid #4CAF50;">
-                        <span style="color: hsl(var(--text-secondary)); font-size: 0.75rem; text-transform: uppercase; font-weight: bold;">Entregue</span>
-                        <h3 style="margin-top: 0.5rem; font-size: 1.25rem;">${statusCounts.entregue}</h3>
-                        <p style="font-size: 0.85rem; font-weight: bold; margin-top: 0.3rem; color: #4CAF50;">${priceFmt(statusTotals.entregue)}</p>
-                    </div>
-                    <div class="glass-card" style="padding: 1rem; text-align: center; border-left: 4px solid #F44336;">
-                        <span style="color: hsl(var(--text-secondary)); font-size: 0.75rem; text-transform: uppercase; font-weight: bold;">Cancelado</span>
-                        <h3 style="margin-top: 0.5rem; font-size: 1.25rem;">${statusCounts.cancelado}</h3>
-                        <p style="font-size: 0.85rem; font-weight: bold; margin-top: 0.3rem; color: #F44336;">${priceFmt(statusTotals.cancelado)}</p>
-                    </div>
+                <div class="glass-card p-6 text-center border-b-4 border-[#ff9800]">
+                    <p class="text-muted text-[0.85rem] uppercase">Mais Vendido Geral</p>
+                    <h3 class="text-[1rem] mt-2">${bestSellingProduct.name}</h3>
+                    <small class="text-muted">${bestSellingProduct.qtd} unid. escoadas</small>
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
-                <div class="glass-card" style="padding: 1.5rem; border-left: 4px solid #f44336;">
-                    <strong style="color: hsl(var(--text-secondary)); font-size: 0.8rem; text-transform: uppercase;">Mais Caro (Catálogo)</strong>
-                    <h3 style="margin-top: 0.5rem; font-size: 1.1rem;">${mostExpensive.name}</h3>
-                    <p style="font-size: 1.2rem; font-weight: bold;">${priceFmt(mostExpensive.price)}</p>
+            <div class="mt-8">
+                <h3 class="mb-4">Visão Financeira por Status</h3>
+                <div class="grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-4">
+                    <div class="glass-card p-4 text-center border-l-4 border-orange-500">
+                        <span class="text-muted text-[0.75rem] uppercase font-bold">Pendente</span>
+                        <h3 class="mt-2 text-[1.25rem]">${statusCounts.pendente}</h3>
+                        <p class="text-[0.85rem] font-bold mt-1 text-orange-500">${priceFmt(statusTotals.pendente)}</p>
+                    </div>
+                    <div class="glass-card p-4 text-center border-l-4 border-blue-500">
+                        <span class="text-muted text-[0.75rem] uppercase font-bold">Pago</span>
+                        <h3 class="mt-2 text-[1.25rem]">${statusCounts.pago}</h3>
+                        <p class="text-[0.85rem] font-bold mt-1 text-blue-500">${priceFmt(statusTotals.pago)}</p>
+                    </div>
+                    <div class="glass-card p-4 text-center border-l-4 border-purple-500">
+                        <span class="text-muted text-[0.75rem] uppercase font-bold">Enviado</span>
+                        <h3 class="mt-2 text-[1.25rem]">${statusCounts.enviado}</h3>
+                        <p class="text-[0.85rem] font-bold mt-1 text-purple-500">${priceFmt(statusTotals.enviado)}</p>
+                    </div>
+                    <div class="glass-card p-4 text-center border-l-4 border-green-500">
+                        <span class="text-muted text-[0.75rem] uppercase font-bold">Entregue</span>
+                        <h3 class="mt-2 text-[1.25rem]">${statusCounts.entregue}</h3>
+                        <p class="text-[0.85rem] font-bold mt-1 text-green-500">${priceFmt(statusTotals.entregue)}</p>
+                    </div>
+                    <div class="glass-card p-4 text-center border-l-4 border-red-500">
+                        <span class="text-muted text-[0.75rem] uppercase font-bold">Cancelado</span>
+                        <h3 class="mt-2 text-[1.25rem]">${statusCounts.cancelado}</h3>
+                        <p class="text-[0.85rem] font-bold mt-1 text-red-500">${priceFmt(statusTotals.cancelado)}</p>
+                    </div>
                 </div>
-                <div class="glass-card" style="padding: 1.5rem; border-left: 4px solid #4caf50;">
-                    <strong style="color: hsl(var(--text-secondary)); font-size: 0.8rem; text-transform: uppercase;">Mais Barato (Catálogo)</strong>
-                    <h3 style="margin-top: 0.5rem; font-size: 1.1rem;">${cheapest.name}</h3>
-                    <p style="font-size: 1.2rem; font-weight: bold;">${priceFmt(cheapest.price)}</p>
+            </div>
+
+            <div class="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-4 mt-6">
+                <div class="glass-card p-6 border-l-4 border-[#f44336]">
+                    <strong class="text-muted text-[0.8rem] uppercase">Mais Caro (Catálogo)</strong>
+                    <h3 class="mt-2 text-[1.1rem]">${mostExpensive.name}</h3>
+                    <p class="text-[1.2rem] font-bold">${priceFmt(mostExpensive.price)}</p>
+                </div>
+                <div class="glass-card p-6 border-l-4 border-[#4caf50]">
+                    <strong class="text-muted text-[0.8rem] uppercase">Mais Barato (Catálogo)</strong>
+                    <h3 class="mt-2 text-[1.1rem]">${cheapest.name}</h3>
+                    <p class="text-[1.2rem] font-bold">${priceFmt(cheapest.price)}</p>
                 </div>
             </div>
             
-            <div class="glass-card" style="padding: 1.5rem; margin-top: 1rem;">
+            <div class="glass-card p-6 mt-4">
                 <h3>Resumo Financeiro do Estoque</h3>
-                <p style="margin-top: 0.5rem; color: hsl(var(--text-secondary));">Total de produtos cadastrados: <strong style="color: hsl(var(--text-primary));">${products.length}</strong></p>
-                <p style="color: hsl(var(--text-secondary));">Capital imobilizado (Estoque Físico): <strong style="color: hsl(var(--text-primary));">${priceFmt(products.reduce((acc, p) => acc + (p.price * (p.stock || 0)), 0))}</strong></p>
+                <p class="mt-2 text-muted">Total de produtos cadastrados: <strong class="text-primary">${products.length}</strong></p>
+                <p class="text-muted">Capital imobilizado (Estoque Físico): <strong class="text-primary">${priceFmt(products.reduce((acc, p) => acc + (p.price * (p.stock || 0)), 0))}</strong></p>
             </div>
         `;
 
@@ -594,6 +603,6 @@ export async function loadAdminReports(startDate = '', endDate = '') {
 
     } catch (err) {
         console.error("Erro ao gerar relatórios corporativos:", err);
-        reportPanel.innerHTML = '<h2>Relatórios</h2><p style="color:red;">Erro ao processar dados de venda. Verifique a base de dados.</p>';
+        reportPanel.innerHTML = '<h2 class="text-2xl font-bold">Relatórios</h2><p class="text-red-500 mt-2">Erro ao processar dados de venda. Verifique a base de dados.</p>';
     }
 }

@@ -93,7 +93,7 @@ export async function loadAdminUsers() {
     const tableBody = document.getElementById('admin-users-table');
     if (!tableBody) return;
 
-    tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 1rem;">Carregando usuários...</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">Carregando usuários...</td></tr>';
 
     try {
         const { data: users, error } = await supabase
@@ -104,7 +104,7 @@ export async function loadAdminUsers() {
         if (error) throw error;
 
         if (!users || users.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Nenhum usuário encontrado.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-4">Nenhum usuário encontrado.</td></tr>';
             return;
         }
 
@@ -112,28 +112,27 @@ export async function loadAdminUsers() {
 
         users.forEach(user => {
             const row = document.createElement('tr');
-            row.className = 'admin-product-row';
-            row.style.borderBottom = '1px solid hsl(var(--text-secondary)/0.1)';
+            row.className = 'admin-product-row border-b border-[hsl(var(--text-secondary)/0.1)]';
 
             const addressDisplay = user.address
                 ? `${user.address}${user.zipcode ? `, CEP: ${user.zipcode}` : ''}${user.city ? ` - ${user.city}` : ''}`
-                : '<span style="color: hsl(var(--text-secondary)/0.5)">Não informado</span>';
+                : '<span class="text-muted/50">Não informado</span>';
 
             const roleLabel = user.role === 'administrador'
-                ? '<span class="product-tag" style="position:static; background:hsl(var(--primary));">Admin</span>'
-                : (user.role === 'vendedor' ? '<span class="product-tag" style="position:static; background:hsl(var(--accent-color));">Vendedor</span>' : 'Comprador');
+                ? '<span class="product-tag static bg-[hsl(var(--text-primary))] text-[hsl(var(--bg-primary))]">Admin</span>'
+                : (user.role === 'vendedor' ? '<span class="product-tag static bg-[hsl(var(--accent-color))] text-white">Vendedor</span>' : 'Comprador');
 
             row.innerHTML = `
-                <td data-label="Nome do Cliente" style="padding: 0.8rem 0; font-weight: 600;">${user.full_name}</td>
-                <td data-label="Telefone" style="padding: 0.8rem 0;">${user.phone || ' - '}</td>
-                <td data-label="Endereço Completo" style="padding: 0.8rem 0; font-size: 0.9rem; max-width: 300px;">${addressDisplay}</td>
-                <td data-label="Tipo" style="padding: 0.8rem 0;">${roleLabel}</td>
+                <td data-label="Nome do Cliente" class="py-[0.8rem] font-semibold">${user.full_name}</td>
+                <td data-label="Telefone" class="py-[0.8rem]">${user.phone || ' - '}</td>
+                <td data-label="Endereço Completo" class="py-[0.8rem] text-[0.9rem] max-w-[300px]">${addressDisplay}</td>
+                <td data-label="Tipo" class="py-[0.8rem]">${roleLabel}</td>
             `;
             tableBody.appendChild(row);
         });
 
     } catch (err) {
         console.error("Erro ao carregar usuários admin:", err);
-        tableBody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:red;">Erro ao buscar dados. Tente novamente.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-red-500 p-4">Erro ao buscar dados. Tente novamente.</td></tr>';
     }
 }
