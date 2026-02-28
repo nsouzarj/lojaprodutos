@@ -447,6 +447,19 @@ h4 {
 }
 
 
+@media (max-width: 767px) {
+  .hero-section {
+    padding: 30px 0 40px 0;
+    /* Diminui muito o enorme espaço do topo até o texto no mobile */
+    min-height: auto;
+  }
+
+  .hero-visuals {
+    margin-top: 0;
+    /* Remove a margem negativa que estava achatando os itens */
+  }
+}
+
 /* Produtos e Grids */
 .products-section {
   padding: var(--space-lg) 0;

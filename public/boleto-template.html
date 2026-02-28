@@ -27,10 +27,12 @@
             margin-bottom: 20px;
         }
         .bank-logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #ec7000; /* Itaú laranja */
             margin-right: 20px;
+            display: flex;
+            align-items: center;
+        }
+        .bank-logo img {
+            height: 35px; /* Altura ajustada para o logo do Itaú */
         }
         .bank-code {
             font-size: 24px;
@@ -122,7 +124,7 @@
     <div class="boleto-container">
         
         <div class="header">
-            <div class="bank-logo">Itaú</div>
+            <div class="bank-logo"><img src="logoitau.png" alt="Itaú"></div>
             <div class="bank-code">341-7</div>
             <div class="linha-digitavel" id="b-linha-digitavel">34191.09008 00000.000000 00000.000000 1 00000000000000</div>
         </div>
