@@ -31,6 +31,34 @@ A interface da **Loja V8** adere rigorosamente aos princípios de design de *Gla
 
 O projeto adere uma hierarquia estrita focada em **Módulos Limpos (Clean Modules)**. Os arquivos de regras de negócio (Serviços) nunca misturam os de Views (Páginas/Modalidades) e seguem **Princípios SOLID** (Single Responsibility e Dependency Inversion), concentrando acesso direto ao backend em uma camada de Repositórios dedicada:
 
+### Diagrama de Arquitetura (SOLID)
+
+```mermaid
+graph TD
+    classDef layer fill:#f4f4f5,stroke:#d4d4d8,stroke-width:1px,color:#18181b;
+    classDef backend fill:#3ecf8e,stroke:#047857,stroke-width:1px,color:#fff;
+
+    subgraph Frontend [Frontend Vanilla JS]
+        UI["Páginas / Componentes UI<br/>(HTML, CSS, DOM Events)"]:::layer
+        Services["Serviços / Regras de Negócio<br/>(cart.js, auth.js, products.js)"]:::layer
+        Repos["Repositórios / Data Access<br/>(Isolam o Supabase)"]:::layer
+    end
+
+    subgraph Supabase [Backend as a Service]
+        Database[(PostgreSQL DB)]:::backend
+        Auth[Autenticação]:::backend
+        Bucket[Storage / Imagens]:::backend
+    end
+
+    UI -->|"Interage com"| Services
+    Services -->|"Inversão de Dependência"| Repos
+    Repos <-->|"API (supabase-js)"| Database
+    Repos <-->|"API"| Auth
+    Repos <-->|"Uploads"| Bucket
+```
+
+### Estrutura de Diretórios
+
 ```text
 /
 ├── dist/                # Bundle pronto de produção minificado e hasheado gerado pelo Vite. 
