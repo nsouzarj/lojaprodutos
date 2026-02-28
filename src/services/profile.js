@@ -89,6 +89,76 @@ export async function setupProfile() {
     });
 }
 
+// Paginação de Usuários Admin
+let adminUsersData = [];
+let adminUsersPage = 1;
+const ADMIN_USERS_PER_PAGE = 10;
+
+function renderAdminUsersTable() {
+    const tableBody = document.getElementById('admin-users-table');
+    if (!tableBody) return;
+
+    if (!adminUsersData || adminUsersData.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted p-4">Nenhum usuário encontrado.</td></tr>';
+        const paginationContainer = document.getElementById('admin-users-pagination');
+        if (paginationContainer) paginationContainer.innerHTML = '';
+        return;
+    }
+
+    const totalPages = Math.ceil(adminUsersData.length / ADMIN_USERS_PER_PAGE);
+    if (adminUsersPage > totalPages) adminUsersPage = totalPages;
+    if (adminUsersPage < 1) adminUsersPage = 1;
+
+    const startIdx = (adminUsersPage - 1) * ADMIN_USERS_PER_PAGE;
+    const endIdx = startIdx + ADMIN_USERS_PER_PAGE;
+    const paginatedItems = adminUsersData.slice(startIdx, endIdx);
+
+    tableBody.innerHTML = '';
+
+    paginatedItems.forEach(user => {
+        const row = document.createElement('tr');
+        row.className = 'admin-product-row border-b border-[hsl(var(--text-secondary)/0.1)]';
+
+        const addressDisplay = user.address
+            ? `${user.address}${user.zipcode ? `, CEP: ${user.zipcode}` : ''}${user.city ? ` - ${user.city}` : ''}`
+            : '<span class="text-muted/50">Não informado</span>';
+
+        const roleLabel = user.role === 'administrador'
+            ? '<span class="product-tag static bg-[hsl(var(--text-primary))] text-[hsl(var(--bg-primary))]">Admin</span>'
+            : (user.role === 'vendedor' ? '<span class="product-tag static bg-[hsl(var(--accent-color))] text-white">Vendedor</span>' : 'Comprador');
+
+        row.innerHTML = `
+            <td data-label="Nome do Cliente" class="py-[0.8rem] font-semibold">${user.full_name}</td>
+            <td data-label="Telefone" class="py-[0.8rem]">${user.phone || ' - '}</td>
+            <td data-label="Endereço Completo" class="py-[0.8rem] text-[0.9rem] max-w-[300px]">${addressDisplay}</td>
+            <td data-label="Tipo" class="py-[0.8rem]">${roleLabel}</td>
+        `;
+        tableBody.appendChild(row);
+    });
+
+    let paginationContainer = document.getElementById('admin-users-pagination');
+    if (!paginationContainer) {
+        const tableWrapper = tableBody.closest('.overflow-x-auto');
+        paginationContainer = document.createElement('div');
+        paginationContainer.id = 'admin-users-pagination';
+        paginationContainer.className = 'flex justify-between items-center p-4 border-t border-border-dynamic/30';
+        tableWrapper.parentNode.insertBefore(paginationContainer, tableWrapper.nextSibling);
+    }
+
+    paginationContainer.innerHTML = `
+        <span class="text-[0.85rem] text-muted">Página ${adminUsersPage} de ${totalPages} (Total: ${adminUsersData.length})</span>
+        <div class="flex gap-2">
+            <button class="btn btn-outline btn-sm px-3 py-1 text-[0.8rem]" onclick="window.changeAdminUsersPage(-1)" ${adminUsersPage === 1 ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>Anterior</button>
+            <button class="btn btn-outline btn-sm px-3 py-1 text-[0.8rem]" onclick="window.changeAdminUsersPage(1)" ${adminUsersPage === totalPages ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>Próxima</button>
+        </div>
+    `;
+}
+
+window.changeAdminUsersPage = function (direction) {
+    adminUsersPage += direction;
+    renderAdminUsersTable();
+};
+
 export async function loadAdminUsers() {
     const tableBody = document.getElementById('admin-users-table');
     if (!tableBody) return;
@@ -108,28 +178,9 @@ export async function loadAdminUsers() {
             return;
         }
 
-        tableBody.innerHTML = '';
-
-        users.forEach(user => {
-            const row = document.createElement('tr');
-            row.className = 'admin-product-row border-b border-[hsl(var(--text-secondary)/0.1)]';
-
-            const addressDisplay = user.address
-                ? `${user.address}${user.zipcode ? `, CEP: ${user.zipcode}` : ''}${user.city ? ` - ${user.city}` : ''}`
-                : '<span class="text-muted/50">Não informado</span>';
-
-            const roleLabel = user.role === 'administrador'
-                ? '<span class="product-tag static bg-[hsl(var(--text-primary))] text-[hsl(var(--bg-primary))]">Admin</span>'
-                : (user.role === 'vendedor' ? '<span class="product-tag static bg-[hsl(var(--accent-color))] text-white">Vendedor</span>' : 'Comprador');
-
-            row.innerHTML = `
-                <td data-label="Nome do Cliente" class="py-[0.8rem] font-semibold">${user.full_name}</td>
-                <td data-label="Telefone" class="py-[0.8rem]">${user.phone || ' - '}</td>
-                <td data-label="Endereço Completo" class="py-[0.8rem] text-[0.9rem] max-w-[300px]">${addressDisplay}</td>
-                <td data-label="Tipo" class="py-[0.8rem]">${roleLabel}</td>
-            `;
-            tableBody.appendChild(row);
-        });
+        adminUsersData = users || [];
+        adminUsersPage = 1;
+        renderAdminUsersTable();
 
     } catch (err) {
         console.error("Erro ao carregar usuários admin:", err);

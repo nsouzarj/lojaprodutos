@@ -1,6 +1,86 @@
 import { supabase } from '../lib/supabase.js';
 import { showDialog } from '../ui/dialog.js';
 
+// Paginação Minhas Compras (Usuário)
+let myOrdersData = [];
+let myOrdersPage = 1;
+const MY_ORDERS_PER_PAGE = 5;
+
+function renderMyOrdersTable() {
+    const tableBody = document.getElementById('my-orders-table');
+    if (!tableBody) return;
+
+    if (!myOrdersData || myOrdersData.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-muted p-4">Nenhum pedido realizado ainda.</td></tr>';
+        const paginationContainer = document.getElementById('my-orders-pagination');
+        if (paginationContainer) paginationContainer.innerHTML = '';
+        return;
+    }
+
+    const totalPages = Math.ceil(myOrdersData.length / MY_ORDERS_PER_PAGE);
+    if (myOrdersPage > totalPages) myOrdersPage = totalPages;
+    if (myOrdersPage < 1) myOrdersPage = 1;
+
+    const startIdx = (myOrdersPage - 1) * MY_ORDERS_PER_PAGE;
+    const endIdx = startIdx + MY_ORDERS_PER_PAGE;
+    const paginatedItems = myOrdersData.slice(startIdx, endIdx);
+
+    tableBody.innerHTML = '';
+
+    paginatedItems.forEach(order => {
+        const dateFmt = new Intl.DateTimeFormat('pt-BR', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        }).format(new Date(order.created_at));
+
+        const priceFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total);
+
+        let statusClass = 'text-muted';
+        if (order.status.toLowerCase() === 'pendente') statusClass = 'text-orange-500';
+        if (order.status.toLowerCase() === 'pago') statusClass = 'text-blue-500';
+        if (order.status.toLowerCase() === 'enviado') statusClass = 'text-purple-500';
+        if (order.status.toLowerCase() === 'entregue') statusClass = 'text-green-500';
+        if (order.status.toLowerCase() === 'cancelado') statusClass = 'text-red-500';
+
+        tableBody.innerHTML += `
+         <tr class="admin-product-row border-b border-[hsl(var(--text-secondary)/0.1)]">
+            <td data-label="Nº Pedido" class="py-[0.8rem] font-mono">#${order.id.toString().substring(0, 8)}</td>
+            <td data-label="Data" class="py-[0.8rem]">${dateFmt}</td>
+            <td data-label="Destino" class="py-[0.8rem] text-[0.85rem] max-w-[250px]">${order.delivery_address || 'Endereço não cadastrado'}</td>
+            <td data-label="Status" class="py-[0.8rem] font-bold capitalize ${statusClass}">${order.status}</td>
+            <td data-label="Total" class="py-[0.8rem]">${priceFmt}</td>
+            <td data-label="Ação" class="py-[0.8rem] flex justify-end">
+               <button onclick="window.viewOrderDetails('${order.id}')" class="btn btn-icon btn-sm p-1 px-2 text-xs border-0 bg-transparent text-primary" title="Ver Detalhes do Pedido">
+                   <span class="material-symbols-outlined text-[20px]">visibility</span>
+               </button>
+            </td>
+         </tr>
+      `;
+    });
+
+    let paginationContainer = document.getElementById('my-orders-pagination');
+    if (!paginationContainer) {
+        const tableWrapper = tableBody.closest('.overflow-x-auto');
+        paginationContainer = document.createElement('div');
+        paginationContainer.id = 'my-orders-pagination';
+        paginationContainer.className = 'flex justify-between items-center p-4 border-t border-border-dynamic/30';
+        tableWrapper.parentNode.insertBefore(paginationContainer, tableWrapper.nextSibling);
+    }
+
+    paginationContainer.innerHTML = `
+        <span class="text-[0.85rem] text-muted">Página ${myOrdersPage} de ${totalPages}</span>
+        <div class="flex gap-2">
+            <button class="btn btn-outline btn-sm px-3 py-1 text-[0.8rem]" onclick="window.changeMyOrdersPage(-1)" ${myOrdersPage === 1 ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>Anterior</button>
+            <button class="btn btn-outline btn-sm px-3 py-1 text-[0.8rem]" onclick="window.changeMyOrdersPage(1)" ${myOrdersPage === totalPages ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>Próxima</button>
+        </div>
+    `;
+}
+
+window.changeMyOrdersPage = function (direction) {
+    myOrdersPage += direction;
+    renderMyOrdersTable();
+};
+
 /**
  * Carrega o histórico de pedidos do usuário logado (Perfil Comprador)
  */
@@ -31,38 +111,10 @@ export async function loadMyOrders() {
             return;
         }
 
-        tableBody.innerHTML = '';
+        myOrdersData = myOrders || [];
+        myOrdersPage = 1;
+        renderMyOrdersTable();
 
-        myOrders.forEach(order => {
-            const dateFmt = new Intl.DateTimeFormat('pt-BR', {
-                day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            }).format(new Date(order.created_at));
-
-            const priceFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total);
-
-            let statusClass = 'text-muted';
-            if (order.status.toLowerCase() === 'pendente') statusClass = 'text-orange-500';
-            if (order.status.toLowerCase() === 'pago') statusClass = 'text-blue-500';
-            if (order.status.toLowerCase() === 'enviado') statusClass = 'text-purple-500';
-            if (order.status.toLowerCase() === 'entregue') statusClass = 'text-green-500';
-            if (order.status.toLowerCase() === 'cancelado') statusClass = 'text-red-500';
-
-            tableBody.innerHTML += `
-             <tr class="admin-product-row border-b border-[hsl(var(--text-secondary)/0.1)]">
-                <td data-label="Nº Pedido" class="py-[0.8rem] font-mono">#${order.id.toString().substring(0, 8)}</td>
-                <td data-label="Data" class="py-[0.8rem]">${dateFmt}</td>
-                <td data-label="Destino" class="py-[0.8rem] text-[0.85rem] max-w-[250px]">${order.delivery_address || 'Endereço não cadastrado'}</td>
-                <td data-label="Status" class="py-[0.8rem] font-bold capitalize ${statusClass}">${order.status}</td>
-                <td data-label="Total" class="py-[0.8rem]">${priceFmt}</td>
-                <td data-label="Ação" class="py-[0.8rem] flex justify-end">
-                   <button onclick="window.viewOrderDetails('${order.id}')" class="btn btn-icon btn-sm p-1 px-2 text-xs border-0 bg-transparent text-primary" title="Ver Detalhes do Pedido">
-                       <span class="material-symbols-outlined text-[20px]">visibility</span>
-                   </button>
-                </td>
-             </tr>
-          `;
-        });
     } catch (err) {
         console.error("Erro ao puxar histórico de pedidos:", err);
         tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-red-500 p-4">
@@ -168,6 +220,88 @@ window.viewOrderDetails = async function (orderId) {
     }
 }
 
+// Variáveis globais para paginação das vendas do Admin
+let adminOrdersData = [];
+let adminOrdersPage = 1;
+const ADMIN_ORDERS_PER_PAGE = 10;
+
+/**
+ * Renderiza uma página específica da tabela de pedidos do Admin
+ */
+function renderAdminOrdersTable() {
+    const tableBody = document.getElementById('admin-sales-table');
+    if (!tableBody) return;
+
+    if (!adminOrdersData || adminOrdersData.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhuma venda registrada.</td></tr>';
+
+        const paginationContainer = document.getElementById('admin-sales-pagination');
+        if (paginationContainer) paginationContainer.innerHTML = '';
+        return;
+    }
+
+    const totalPages = Math.ceil(adminOrdersData.length / ADMIN_ORDERS_PER_PAGE);
+    if (adminOrdersPage > totalPages) adminOrdersPage = totalPages;
+    if (adminOrdersPage < 1) adminOrdersPage = 1;
+
+    const startIdx = (adminOrdersPage - 1) * ADMIN_ORDERS_PER_PAGE;
+    const endIdx = startIdx + ADMIN_ORDERS_PER_PAGE;
+    const paginatedItems = adminOrdersData.slice(startIdx, endIdx);
+
+    tableBody.innerHTML = '';
+
+    paginatedItems.forEach(order => {
+        const priceFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total);
+
+        const row = document.createElement('tr');
+        row.className = 'admin-product-row border-b border-[hsl(var(--text-secondary)/0.1)]';
+        row.innerHTML = `
+            <td data-label="Nº Pedido" class="py-[0.8rem] font-mono text-[0.75rem]">#${order.id.toString().substring(0, 8)}</td>
+            <td data-label="Cliente" class="py-[0.8rem]">${order.profiles ? order.profiles.full_name : 'Anônimo'}</td>
+            <td data-label="Status" class="py-[0.8rem]">
+                <select id="status-select-${order.id}" class="p-1 rounded bg-transparent text-inherit text-[0.85rem] border border-[hsl(var(--text-secondary)/0.3)]">
+                    <option value="pendente" ${order.status === 'pendente' ? 'selected' : ''}>Pendente</option>
+                    <option value="pago" ${order.status === 'pago' ? 'selected' : ''}>Pago</option>
+                    <option value="enviado" ${order.status === 'enviado' ? 'selected' : ''}>Enviado</option>
+                    <option value="entregue" ${order.status === 'entregue' ? 'selected' : ''}>Entregue</option>
+                    <option value="cancelado" ${order.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
+                </select>
+            </td>
+            <td data-label="Total" class="py-[0.8rem] font-bold">${priceFmt}</td>
+            <td data-label="Ações" class="py-[0.8rem] flex gap-2 justify-end items-center flex-wrap">
+                <button onclick="window.viewOrderDetails('${order.id}')" class="btn btn-icon btn-sm p-1 border-0 bg-transparent text-primary text-[0.75rem]" title="Ver Detalhes do Pedido"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
+                <button onclick="window.updateOrderStatus('${order.id}', this)" class="btn btn-outline btn-sm p-1 px-2 text-[0.75rem]">Atualizar</button>
+                ${order.status === 'cancelado' ? `<button onclick="window.deleteOrder('${order.id}', this)" class="btn btn-icon btn-sm p-1 border-0 text-[#ff3366] bg-[#ff3366]/10" title="Excluir Pedido"><span class="material-symbols-outlined text-[18px]">delete</span></button>` : ''}
+            </td>
+        `;
+        tableBody.appendChild(row);
+    });
+
+    // Renderiza Controles de Paginação
+    let paginationContainer = document.getElementById('admin-sales-pagination');
+    if (!paginationContainer) {
+        // Criação dinâmica da div de paginação logo abaixo da tabela
+        const tableWrapper = tableBody.closest('.overflow-x-auto');
+        paginationContainer = document.createElement('div');
+        paginationContainer.id = 'admin-sales-pagination';
+        paginationContainer.className = 'flex justify-between items-center p-4 border-t border-border-dynamic/30';
+        tableWrapper.parentNode.insertBefore(paginationContainer, tableWrapper.nextSibling);
+    }
+
+    paginationContainer.innerHTML = `
+        <span class="text-[0.85rem] text-muted">Página ${adminOrdersPage} de ${totalPages} (Total: ${adminOrdersData.length})</span>
+        <div class="flex gap-2">
+            <button class="btn btn-outline btn-sm px-3 py-1 text-[0.8rem]" onclick="window.changeAdminOrdersPage(-1)" ${adminOrdersPage === 1 ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>Anterior</button>
+            <button class="btn btn-outline btn-sm px-3 py-1 text-[0.8rem]" onclick="window.changeAdminOrdersPage(1)" ${adminOrdersPage === totalPages ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>Próxima</button>
+        </div>
+    `;
+}
+
+window.changeAdminOrdersPage = function (direction) {
+    adminOrdersPage += direction;
+    renderAdminOrdersTable();
+};
+
 /**
  * Carrega a listagem geral de pedidos para o Administrador
  */
@@ -213,40 +347,10 @@ export async function loadAdminOrders() {
         if (errorOrders) throw errorOrders;
 
         if (tableBody) {
-            if (!allOrders || allOrders.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Nenhuma venda registrada.</td></tr>';
-                return;
-            }
-
-            tableBody.innerHTML = '';
-            allOrders.forEach(order => {
-                const priceFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(order.total);
-
-                const row = document.createElement('tr');
-                row.className = 'admin-product-row border-b border-[hsl(var(--text-secondary)/0.1)]';
-                row.innerHTML = `
-                    <td data-label="Nº Pedido" class="py-[0.8rem] font-mono text-[0.75rem]">#${order.id.toString().substring(0, 8)}</td>
-                    <td data-label="Cliente" class="py-[0.8rem]">${order.profiles ? order.profiles.full_name : 'Anônimo'}</td>
-                    <td data-label="Status" class="py-[0.8rem]">
-                        <select id="status-select-${order.id}" class="p-1 rounded bg-transparent text-inherit text-[0.85rem] border border-[hsl(var(--text-secondary)/0.3)]">
-                            <option value="pendente" ${order.status === 'pendente' ? 'selected' : ''}>Pendente</option>
-                            <option value="pago" ${order.status === 'pago' ? 'selected' : ''}>Pago</option>
-                            <option value="enviado" ${order.status === 'enviado' ? 'selected' : ''}>Enviado</option>
-                            <option value="entregue" ${order.status === 'entregue' ? 'selected' : ''}>Entregue</option>
-                            <option value="cancelado" ${order.status === 'cancelado' ? 'selected' : ''}>Cancelado</option>
-                        </select>
-                    </td>
-                    <td data-label="Total" class="py-[0.8rem] font-bold">${priceFmt}</td>
-                    <td data-label="Ações" class="py-[0.8rem] flex gap-2 justify-end items-center flex-wrap">
-                        <button onclick="window.viewOrderDetails('${order.id}')" class="btn btn-icon btn-sm p-1 border-0 bg-transparent text-primary text-[0.75rem]" title="Ver Detalhes do Pedido"><span class="material-symbols-outlined text-[20px]">visibility</span></button>
-                        <button onclick="window.updateOrderStatus('${order.id}', this)" class="btn btn-outline btn-sm p-1 px-2 text-[0.75rem]">Atualizar</button>
-                        ${order.status === 'cancelado' ? `<button onclick="window.deleteOrder('${order.id}', this)" class="btn btn-icon btn-sm p-1 border-0 text-[#ff3366] bg-[#ff3366]/10" title="Excluir Pedido"><span class="material-symbols-outlined text-[18px]">delete</span></button>` : ''}
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
-
-            console.log("[ADMIN] Tabela de pedidos carregada com", allOrders.length, "itens.");
+            adminOrdersData = allOrders || [];
+            adminOrdersPage = 1; // Reseta sempre pra pag. 1 ao recarregar a tela
+            renderAdminOrdersTable();
+            console.log("[ADMIN] Tabela de pedidos carregada com", adminOrdersData.length, "itens.");
         }
     } catch (err) {
         console.error("Erro ao carregar Dashboard Admin:", err);
@@ -262,7 +366,7 @@ window.updateOrderStatus = async function (idDoPedido, botao) {
         return;
     }
 
-    const select = document.getElementById(`status - select - ${idDoPedido}`);
+    const select = document.getElementById(`status-select-${idDoPedido}`);
     if (!select) return;
 
     const novoStatus = select.value;
@@ -458,8 +562,11 @@ export async function loadAdminReports(startDate = '', endDate = '') {
             }
         });
 
-        // Fetch Itens para descobrir o Produto Mais Vendido
-        const { data: orderItems } = await supabase.from('order_items').select('product_id, quantity');
+        // Fetch Itens para descobrir o Produto Mais Vendido (Apenas vendas firmes)
+        const { data: orderItems } = await supabase
+            .from('order_items')
+            .select('product_id, quantity, orders!inner(status)')
+            .in('orders.status', ['pago', 'enviado', 'entregue']);
         let bestSellingProduct = { name: 'Sem Vendas', qtd: 0 };
 
         if (orderItems && orderItems.length > 0) {

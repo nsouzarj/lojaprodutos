@@ -95,7 +95,9 @@ export function setupAuth() {
                         if (btnRealLogout) {
                             btnRealLogout.addEventListener('click', (ev) => {
                                 ev.stopPropagation(); // Evitar duplo click
-                                supabase.auth.signOut().then(() => window.location.reload());
+                                supabase.auth.signOut().then(() => {
+                                    window.location.href = import.meta.env.BASE_URL || '/';
+                                });
                             });
                         }
                     }, 50);
@@ -113,7 +115,7 @@ export function setupAuth() {
             // Caso contrário (deslogado)
             if (btnLogin.textContent.trim() === 'Sair') {
                 supabase.auth.signOut().then(() => {
-                    window.location.reload();
+                    window.location.href = import.meta.env.BASE_URL || '/';
                 });
                 return;
             }
@@ -229,15 +231,59 @@ export function setupAuth() {
                 loginForm.reset();
                 authModal.classList.remove('active');
 
-                // Redireciona o usuário (comprador ou admin) pra dentro do app automaticamente:
+                // Redirecionamento Inteligente de Pós-Login
                 const viewStore = document.getElementById('view-store');
                 const viewDash = document.getElementById('view-dashboard');
                 const iconCart = document.getElementById('btn-cart');
 
+                // Checa se é comprador novo sem pedidos
+                const { count: ordersCount } = await supabase.from('orders')
+                    .select('*', { count: 'exact', head: true })
+                    .eq('user_id', data.user.id);
+
+                const { data: profileObj } = await supabase.from('profiles')
+                    .select('role, phone, address')
+                    .eq('id', data.user.id)
+                    .single();
+
+                const role = profileObj?.role || 'comprador';
+                const hasCompletedProfile = profileObj && profileObj.phone && profileObj.address;
+
                 if (viewStore && viewDash) {
-                    viewStore.style.display = 'none';
-                    if (iconCart) iconCart.style.display = 'none';
-                    viewDash.style.display = 'block';
+                    if (role === 'administrador' || role === 'vendedor') {
+                        // Admin/Vendedor sempre pro painel
+                        viewStore.style.display = 'none';
+                        if (iconCart) iconCart.style.display = 'none';
+                        viewDash.style.display = 'block';
+                    } else if (!hasCompletedProfile) {
+                        // COMPRADOR INCOMPLETO -> Vai pro Dashboard "Meu Perfil"
+                        viewStore.style.display = 'none';
+                        if (iconCart) iconCart.style.display = 'none';
+                        viewDash.style.display = 'block';
+
+                        // Força exibição da aba de perfil
+                        const dashBtns = document.querySelectorAll('.dash-btn');
+                        const dashPanels = document.querySelectorAll('.dash-panel');
+                        dashBtns.forEach(b => b.classList.remove('active'));
+                        dashPanels.forEach(p => p.style.display = 'none');
+
+                        const dashPerfilBtn = Array.from(dashBtns).find(btn => btn.getAttribute('data-target') === 'dash-perfil');
+                        const dashPerfilPanel = document.getElementById('dash-perfil');
+                        if (dashPerfilBtn) dashPerfilBtn.classList.add('active');
+                        if (dashPerfilPanel) dashPerfilPanel.style.display = 'block';
+
+                        showDialog("Complete seu Cadastro 👋", "Por favor, preencha seus dados de Endereço e Telefone antes de ir para a vitrine para garantirmos a sua entrega.", false);
+                    } else if (ordersCount && ordersCount > 0) {
+                        // Comprador com hitórico -> Painel de Pedidos
+                        viewStore.style.display = 'none';
+                        if (iconCart) iconCart.style.display = 'none';
+                        viewDash.style.display = 'block';
+                    } else {
+                        // Novo comprador já completinho: fica diretamente na Vitrine!
+                        viewStore.style.display = 'block';
+                        if (iconCart) iconCart.style.display = 'inline-flex';
+                        viewDash.style.display = 'none';
+                    }
                 }
 
                 checkSession();

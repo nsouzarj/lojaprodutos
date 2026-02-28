@@ -119,6 +119,19 @@ export function updateCartUI() {
     totalPriceEl.textContent = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalValue);
 }
 
+// Helpers de dias úteis para o Boleto
+function addBusinessDays(date, days) {
+    let result = new Date(date);
+    let addedDays = 0;
+    while (addedDays < days) {
+        result.setDate(result.getDate() + 1);
+        if (result.getDay() !== 0 && result.getDay() !== 6) {
+            addedDays++;
+        }
+    }
+    return result;
+}
+
 export function setupCart() {
     const btnCart = document.getElementById('btn-cart');
     const cartDrawerOverlay = document.getElementById('cart-drawer-overlay');
@@ -177,6 +190,24 @@ export function setupCart() {
 
             const totalToPay = (val === 'cartao_credito') ? totalCredit : totalPix;
             document.getElementById('checkout-total-price').textContent = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalToPay);
+
+            // Re-render Installments Select for Boleto restriction
+            const ccBrandsEl = document.getElementById('cc-allowed-brands');
+            const selectInstalments = document.getElementById('cc-installments');
+            if (selectInstalments) {
+                const totalItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
+                let maxInstallmentsAllowed = (totalItemsCount >= 2) ? 12 : (cart[0]?.product.installments || 1);
+                if (val === 'boleto') maxInstallmentsAllowed = 1;
+
+                selectInstalments.innerHTML = '';
+                for (let i = 1; i <= maxInstallmentsAllowed; i++) {
+                    const instalmentValue = totalCredit / i; // Boleto is considered cash/pix price conceptually, but if you want to use credit here it's 1x anyway. We'll use totalToPay below.
+                    const instalmentValueToPay = totalToPay / i;
+                    const formattedInst = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(instalmentValueToPay);
+                    const desc = i === 1 ? '1x (À vista)' : `${i}x de ${formattedInst} sem juros`;
+                    selectInstalments.innerHTML += `<option value="${i}">${desc}</option>`;
+                }
+            }
         });
     }
 
@@ -229,6 +260,38 @@ export function setupCart() {
                 return;
             }
 
+            // Checa Usuário Completo (Endereço, Telefone, CEP)
+            const profileContext = await loadUserProfile();
+            if (!profileContext || !profileContext.phone || !profileContext.address || !profileContext.zipcode) {
+                cartDrawerOverlay.classList.remove('active');
+                showDialog("Conclua seu Cadastro", "Para concluirmos sua Venda e entrega, precisamos de um Telefone e Endereço válidos. Vamos te levar ao seu perfil!", true);
+
+                // Redireciona pro Perfil
+                const viewStore = document.getElementById('view-store');
+                const viewDash = document.getElementById('view-dashboard');
+                const iconCart = document.getElementById('btn-cart');
+
+                if (viewStore && viewDash) {
+                    viewStore.style.display = 'none';
+                    if (iconCart) iconCart.style.display = 'none';
+                    viewDash.style.display = 'block';
+
+                    const dashBtns = document.querySelectorAll('.dash-btn');
+                    const dashPanels = document.querySelectorAll('.dash-panel');
+                    dashBtns.forEach(b => b.classList.remove('active'));
+                    dashPanels.forEach(p => p.style.display = 'none');
+
+                    const dashPerfilBtn = Array.from(dashBtns).find(btn => btn.getAttribute('data-target') === 'dash-perfil');
+                    const dashPerfilPanel = document.getElementById('dash-perfil');
+                    if (dashPerfilBtn) dashPerfilBtn.classList.add('active');
+                    if (dashPerfilPanel) dashPerfilPanel.style.display = 'block';
+
+                    const btnLogin = document.getElementById('btn-login');
+                    if (btnLogin) btnLogin.innerHTML = `◀ Voltar <span class="hide-mobile">pra Loja</span> &nbsp;|&nbsp; <span id="btn-real-logout" style="cursor:pointer; color:red;">Sair</span>`;
+                }
+                return;
+            }
+
             // Exibir Valor Total Formatado no Modal (Leva em conta primeira seleção = cartao_credito)
             const isCreditFirst = paymentMethodSelect.value === 'cartao_credito';
             const totalPixValue = cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
@@ -240,8 +303,12 @@ export function setupCart() {
             // Nova Regra de Parcelamento:
             // - 1 unidade (produto único): limite igual ao cadastro do produto
             // - 2 ou mais unidades (independente de ser 1 ou mais tipos de produto): limite de até 12x
+            // - Se Boleto for o padrão inicial selecionado, forçamos 1x.
+
+            const methodNow = paymentMethodSelect.value;
             const totalItemsCount = cart.reduce((acc, item) => acc + item.quantity, 0);
             let maxInstallmentsAllowed = (totalItemsCount >= 2) ? 12 : (cart[0].product.installments || 1);
+            if (methodNow === 'boleto') maxInstallmentsAllowed = 1;
 
             let collectedBrands = new Set();
 
@@ -305,6 +372,15 @@ export function setupCart() {
             const fullAddress = `CEP: ${zip} | ${address} | ${city}`;
 
             try {
+                // 0. Gerar Dados do Boleto (Se for o caso)
+                let finalDueDate = null;
+                let finalBarcode = null;
+
+                if (method === 'boleto') {
+                    finalDueDate = addBusinessDays(new Date(), 3).toISOString().split('T')[0];
+                    finalBarcode = `34191.${Math.floor(Math.random() * 99999)} ${Math.floor(Math.random() * 99999)}.000000 00000.${finalComputedValue.toString().replace(/\D/g, '')} 1 00000000000000`;
+                }
+
                 // 1. Gera o Pedido Principal, injetando status dinâmico com base no método falso aprovado
                 let finalStatus = 'pendente';
                 if (method === 'cartao_credito') finalStatus = 'pago'; // Se for cartão, mockamos como aprovado de imeadiato :)
@@ -317,7 +393,9 @@ export function setupCart() {
                         total: finalComputedValue,
                         status: finalStatus,
                         payment_method: method,
-                        delivery_address: fullAddress
+                        delivery_address: fullAddress,
+                        boleto_due_date: finalDueDate,
+                        boleto_barcode: finalBarcode
                     }])
                     .select()
                     .single();
@@ -367,7 +445,35 @@ export function setupCart() {
                     }
                 }
 
-                showDialog("Compra Finalizada! 🎉", "Obrigado! Seu pedido de número #" + orderData.id.split('-')[0] + " foi processado com sucesso!");
+                if (method === 'boleto') {
+                    // Prepara dados pra abrir na nova aba
+                    const priceFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(finalComputedValue);
+                    const dtDoc = new Intl.DateTimeFormat('pt-BR').format(new Date());
+                    const dtVenc = new Intl.DateTimeFormat('pt-BR').format(new Date(finalDueDate + 'T12:00:00Z'));
+
+                    const profileContext = await loadUserProfile();
+                    localStorage.setItem('temp_boleto_print_data', JSON.stringify({
+                        dueDate: dtVenc,
+                        docDate: dtDoc,
+                        amount: priceFmt,
+                        payerName: profileContext ? profileContext.full_name : 'Cliente Não Identificado',
+                        payerAddress: fullAddress,
+                        orderId: orderData.id
+                    }));
+
+                    // Verifica se o usuário marcou pra receber por e-mail
+                    const wantsEmail = document.getElementById('boleto-send-email')?.checked;
+                    let successMessage = `Obrigado! Seu pedido #${orderData.id.split('-')[0]} foi gerado.<br><br><b>Atenção:</b> O seu boleto está sendo gerado e será aberto em uma aba segura para você baixar o PDF ou Imprimir agora mesmo!`;
+
+                    if (wantsEmail) {
+                        successMessage = `Obrigado! Seu pedido #${orderData.id.split('-')[0]} foi gerado.<br><br>Recebemos o registro e em breve os detalhes da sua compra chegarão no seu e-mail.<br><br><b>Atenção:</b> O seu boleto está sendo gerado e será aberto em uma aba segura para você baixar o PDF ou Imprimir agora mesmo!`;
+                    }
+
+                    window.open(import.meta.env.BASE_URL + 'boleto-template.html', '_blank');
+                    showDialog("Pedido Realizado! 📄", successMessage);
+                } else {
+                    showDialog("Compra Finalizada! 🎉", "Obrigado! Seu pedido de número #" + orderData.id.split('-')[0] + " foi processado com sucesso!");
+                }
 
                 // Trato Front e Encerramento
                 cart.length = 0;

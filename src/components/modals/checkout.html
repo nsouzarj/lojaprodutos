@@ -69,10 +69,24 @@
 
           <!-- Campos de Boleto -->
           <div id="boleto-details" style="display: none; text-align: center; margin: 1.5rem 0; background: hsl(var(--bg-secondary)); padding: 1rem; border-radius: 8px; border: 1px dashed hsl(var(--text-secondary)/0.5);">
-            <p style="font-size: 0.9rem;">O boleto será gerado e enviado para o seu e-mail após a confirmação do pedido.</p>
+            <div style="margin-bottom: 1rem; color: hsl(var(--text-primary)); font-weight: bold; font-size: 1.1rem;">Banco Itaú</div>
+            <p style="font-size: 0.9rem; margin-bottom: 0.5rem; color: hsl(var(--text-secondary));">Vencimento em <strong>3 dias úteis</strong>.</p>
+            <p style="font-size: 0.8rem; margin-bottom: 0.8rem; color: hsl(var(--text-secondary));">
+              Após o vencimento, cobrança de juros de 1,5% ao dia.<br>
+              Sujeito a cancelamento após o prazo de carência excedido.
+            </p>
+            <div style="font-size: 0.85rem; padding: 0.5rem; background: hsl(var(--primary)/0.1); border-radius: 4px; color: hsl(var(--primary)); text-align: left; margin-bottom: 0.8rem;">
+              <span class="material-symbols-outlined" style="font-size: 1rem; vertical-align: middle; margin-right: 4px;">info</span>
+              A liberação do pedido ocorre somente após a confirmação do pagamento. O boleto será gerado no final da compra para salvar em PDF.
+            </div>
+            
+            <label style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-size: 0.9rem; color: hsl(var(--text-primary)); cursor: pointer;">
+              <input type="checkbox" id="boleto-send-email" style="width: 16px; height: 16px; cursor: pointer;" checked>
+              Receber notificação do pedido por e-mail
+            </label>
           </div>
 
           <button id="btn-confirm-payment" class="btn btn-primary btn-full" style="margin-top: 1rem;">Confirmar Pagamento e Gerar Pedido</button>
         </div>
       </div>
-    </div>
+    </div>

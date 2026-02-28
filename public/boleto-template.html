@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boleto Bancário - Itaú</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .boleto-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .bank-logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ec7000; /* Itaú laranja */
+            margin-right: 20px;
+        }
+        .bank-code {
+            font-size: 24px;
+            font-weight: bold;
+            border-left: 2px solid #000;
+            border-right: 2px solid #000;
+            padding: 0 15px;
+            margin-right: 15px;
+        }
+        .linha-digitavel {
+            font-size: 18px;
+            font-weight: bold;
+            flex-grow: 1;
+            text-align: right;
+        }
+        .linha {
+            display: flex;
+            border-bottom: 1px solid #000;
+            border-left: 1px solid #000;
+        }
+        .campo {
+            border-right: 1px solid #000;
+            padding: 2px 5px;
+            flex: 1;
+        }
+        .campo-menor { flex: 0.5; }
+        .campo-maior { flex: 2; }
+        .titulo {
+            font-size: 10px;
+            color: #333;
+            display: block;
+        }
+        .valor {
+            font-size: 14px;
+            font-weight: bold;
+            display: block;
+            margin-top: 5px;
+        }
+        .instrucoes {
+            height: 150px;
+            padding: 10px;
+            font-size: 12px;
+        }
+        .codigo-barras-area {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px dashed #ccc;
+        }
+        .codigo-barras-img {
+            height: 60px;
+            width: 400px;
+            background: repeating-linear-gradient(
+                90deg,
+                #000,
+                #000 2px,
+                #fff 2px,
+                #fff 4px,
+                #000 4px,
+                #000 5px,
+                #fff 5px,
+                #fff 8px
+            );
+        }
+        .print-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background: #ec7000;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        @media print {
+            body { background: #fff; padding: 0; }
+            .boleto-container { box-shadow: none; border: none; max-width: 100%; }
+            .print-btn { display: none; }
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-btn" onclick="window.print()">Imprimir / Salvar PDF</button>
+
+    <div class="boleto-container">
+        
+        <div class="header">
+            <div class="bank-logo">Itaú</div>
+            <div class="bank-code">341-7</div>
+            <div class="linha-digitavel" id="b-linha-digitavel">34191.09008 00000.000000 00000.000000 1 00000000000000</div>
+        </div>
+
+        <div class="linha">
+            <div class="campo campo-maior">
+                <span class="titulo">Local de Pagamento</span>
+                <span class="valor">PAGÁVEL EM QUALQUER BANCO OU CORRESPONDENTE BANCÁRIO</span>
+            </div>
+            <div class="campo">
+                <span class="titulo">Vencimento</span>
+                <span class="valor" id="b-vencimento">00/00/0000</span>
+            </div>
+        </div>
+
+        <div class="linha">
+            <div class="campo campo-maior">
+                <span class="titulo">Cedente</span>
+                <span class="valor">LOJA DE PRODUTOS V8 LTDA - CNPJ: 00.000.000/0001-00</span>
+            </div>
+            <div class="campo">
+                <span class="titulo">Agência/Código Cedente</span>
+                <span class="valor">0598 / 18009-9</span>
+            </div>
+        </div>
+
+        <div class="linha">
+            <div class="campo">
+                <span class="titulo">Data do Documento</span>
+                <span class="valor" id="b-data-doc">00/00/0000</span>
+            </div>
+            <div class="campo">
+                <span class="titulo">Número do Documento</span>
+                <span class="valor" id="b-num-doc">000000</span>
+            </div>
+            <div class="campo">
+                <span class="titulo">Espécie Doc.</span>
+                <span class="valor">DM</span>
+            </div>
+            <div class="campo">
+                <span class="titulo">Aceite</span>
+                <span class="valor">N</span>
+            </div>
+            <div class="campo">
+                <span class="titulo">Data Processamento</span>
+                <span class="valor" id="b-data-proc">00/00/0000</span>
+            </div>
+            <div class="campo">
+                <span class="titulo">Nosso Número</span>
+                <span class="valor" id="b-nosso-numero">109/00000001-1</span>
+            </div>
+        </div>
+
+        <div class="linha">
+            <div class="campo campo-maior">
+                <span class="titulo">Uso do Banco</span>
+                <span class="valor"></span>
+            </div>
+            <div class="campo">
+                <span class="titulo">Carteira</span>
+                <span class="valor">109</span>
+            </div>
+            <div class="campo">
+                <span class="titulo">Moeda</span>
+                <span class="valor">R$</span>
+            </div>
+            <div class="campo">
+                <span class="titulo">Quantidade Moeda</span>
+                <span class="valor"></span>
+            </div>
+            <div class="campo">
+                <span class="titulo">Valor</span>
+                <span class="valor"></span>
+            </div>
+            <div class="campo">
+                <span class="titulo">(=) Valor do Documento</span>
+                <span class="valor" id="b-valor-doc">R$ 0,00</span>
+            </div>
+        </div>
+
+        <div class="linha">
+            <div class="campo campo-maior instrucoes">
+                <span class="titulo">Instruções (Texto de Responsabilidade do Cedente)</span>
+                <div style="margin-top: 10px; font-size: 14px; line-height: 1.5;">
+                    <b>APÓS O VENCIMENTO COBRAR MULTA DE 1,5% AO DIA.</b><br>
+                    Não receber se ultrapassar o prazo de carência de 3 dias do vencimento.<br>
+                    <br>
+                    O pedido será liberado para envio somente após a compensação bancária deste boleto.<br>
+                    Obrigado por comprar conosco!
+                </div>
+            </div>
+            <div style="flex:1; display:flex; flex-direction:column;">
+                <div class="campo" style="flex:1;">
+                    <span class="titulo">(-) Desconto / Abatimentos</span>
+                    <span class="valor"></span>
+                </div>
+                <div class="campo" style="flex:1;">
+                    <span class="titulo">(-) Outras Deduções</span>
+                    <span class="valor"></span>
+                </div>
+                <div class="campo" style="flex:1;">
+                    <span class="titulo">(+) Mora / Multa</span>
+                    <span class="valor"></span>
+                </div>
+                <div class="campo" style="flex:1;">
+                    <span class="titulo">(+) Outros Acréscimos</span>
+                    <span class="valor"></span>
+                </div>
+                <div class="campo" style="flex:1;">
+                    <span class="titulo">(=) Valor Cobrado</span>
+                    <span class="valor"></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="linha" style="border-bottom:none;">
+            <div class="campo" style="border:none;">
+                <span class="titulo">Sacado</span>
+                <span class="valor" id="b-sacado-nome" style="margin-bottom: 5px;">NOME DO COMPRADOR</span>
+                <span class="titulo" id="b-sacado-end">ENDEREÇO</span>
+            </div>
+        </div>
+        
+        <div class="codigo-barras-area">
+            <div class="codigo-barras-img"></div>
+        </div>
+        
+    </div>
+
+    <!-- Script de Injeção de Dados ao Abrir a Aba -->
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            try {
+                // Recupera os dados jogados pelo Cart.js no LocalStorage temporariamente
+                const rawData = localStorage.getItem('temp_boleto_print_data');
+                
+                // Seguranca Básica: Bloqueia curiosos acessando a URL diretamente sem comprar
+                if(!rawData) {
+                    alert("Acesso Negado ou Expirado. Este boleto não existe mais ou você não tem permissão para acessá-lo.");
+                    window.location.replace(window.location.origin + '/lojaprodutos/');
+                    return;
+                }
+
+                const boletoData = JSON.parse(rawData);
+                if(boletoData) {
+                    document.getElementById('b-vencimento').innerText = boletoData.dueDate;
+                    document.getElementById('b-data-doc').innerText = boletoData.docDate;
+                    document.getElementById('b-data-proc').innerText = boletoData.docDate;
+                    document.getElementById('b-valor-doc').innerText = boletoData.amount;
+                    document.getElementById('b-sacado-nome').innerText = boletoData.payerName;
+                    document.getElementById('b-sacado-end').innerText = boletoData.payerAddress;
+                    document.getElementById('b-num-doc').innerText = boletoData.orderId.substring(0,8).toUpperCase();
+                    
+                    // Simula código numérico baseado no ID da venda e valor (Fictício)
+                    const cleanAmount = boletoData.amount.replace(/\D/g, '');
+                    const mockLinha = `34191.${boletoData.orderId.substring(0,5)} ${boletoData.orderId.substring(5,10)}.000000 00000.${cleanAmount} 1 00000000000000`.toUpperCase();
+                    document.getElementById('b-linha-digitavel').innerText = mockLinha;
+
+                    // Limpa pra não vazar e impedir que a pessoa recarregue a mesma aba 
+                    // e compartilhe com os outros
+                    localStorage.removeItem('temp_boleto_print_data');
+                    
+                    // Auto-invoke print dialog setTimeout
+                    setTimeout(() => window.print(), 800);
+                }
+            } catch(e) {
+                console.error("Erro ao montar layout do boleto", e);
+                window.location.replace('/');
+            }
+        });
+    </script>
+</body>
+</html>

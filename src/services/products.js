@@ -292,38 +292,40 @@ function openGalleryModal(imgUrls, productId = null) {
     }
 }
 
-export async function loadAdminProducts() {
+// Paginação de Gestão de Produtos
+let adminProductsData = [];
+let adminProductsFiltered = [];
+let adminProductsPage = 1;
+const ADMIN_PRODUCTS_PER_PAGE = 10;
+
+function renderAdminProductsTable() {
     const tableBody = document.getElementById('admin-products-table');
     if (!tableBody) return;
 
-    tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4">Carregando dados reais do Banco...</td></tr>';
-
-    const { data: adminProducts, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-    if (error || !adminProducts) {
-        tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-red-500">Erro ao buscar catálogo.</td></tr>';
+    if (!adminProductsFiltered || adminProductsFiltered.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-muted">Nenhum produto cadastrado/encontrado.</td></tr>';
+        const paginationContainer = document.getElementById('admin-products-pagination');
+        if (paginationContainer) paginationContainer.innerHTML = '';
         return;
     }
 
-    if (adminProducts.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Nenhum produto cadastrado ainda.</td></tr>';
-        return;
-    }
+    const totalPages = Math.ceil(adminProductsFiltered.length / ADMIN_PRODUCTS_PER_PAGE);
+    if (adminProductsPage > totalPages) adminProductsPage = totalPages;
+    if (adminProductsPage < 1) adminProductsPage = 1;
+
+    const startIdx = (adminProductsPage - 1) * ADMIN_PRODUCTS_PER_PAGE;
+    const endIdx = startIdx + ADMIN_PRODUCTS_PER_PAGE;
+    const paginatedItems = adminProductsFiltered.slice(startIdx, endIdx);
 
     tableBody.innerHTML = '';
 
-    adminProducts.forEach(prod => {
+    paginatedItems.forEach(prod => {
         const priceFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(prod.price);
         const costFmt = prod.cost_price
             ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(prod.cost_price)
             : '<span class="text-muted text-[0.8rem]">Não info.</span>';
 
-        // Passando raw data para edição em stringfy e setando no dataset da linha ou botao
         const prodDataStr = encodeURIComponent(JSON.stringify(prod));
-
         const mainImg = (prod.image_url || '').split(',')[0] || 'https://placehold.co/400x400/f8fafc/94a3b8?text=Sem+Foto';
 
         tableBody.innerHTML += `
@@ -345,7 +347,6 @@ export async function loadAdminProducts() {
       `;
     });
 
-    // Event listeners para os botões de edição de dentro da tabela
     const editBtns = tableBody.querySelectorAll('.btn-edit-product');
     editBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -362,24 +363,71 @@ export async function loadAdminProducts() {
         });
     });
 
-    // Event listener para o campo de busca (Filtro) do Admin
-    const searchInput = document.getElementById('admin-search-product');
-    if (searchInput) {
-        // Remove listener antigo para não duplicar eventos ao recarregar a tabela
-        const newSearchInput = searchInput.cloneNode(true);
-        searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+    let paginationContainer = document.getElementById('admin-products-pagination');
+    if (!paginationContainer) {
+        const tableWrapper = tableBody.closest('.overflow-x-auto');
+        paginationContainer = document.createElement('div');
+        paginationContainer.id = 'admin-products-pagination';
+        paginationContainer.className = 'flex justify-between items-center p-4 border-t border-border-dynamic/30';
+        tableWrapper.parentNode.insertBefore(paginationContainer, tableWrapper.nextSibling);
+    }
 
-        newSearchInput.addEventListener('input', (e) => {
-            const term = e.target.value.toLowerCase().trim();
-            const rows = tableBody.querySelectorAll('.admin-product-row');
-            rows.forEach(row => {
-                const nameCell = row.querySelector('.prod-search-name');
-                if (nameCell) {
-                    const text = nameCell.textContent.toLowerCase();
-                    row.style.display = text.includes(term) ? '' : 'none';
-                }
+    paginationContainer.innerHTML = `
+        <span class="text-[0.85rem] text-muted">Página ${adminProductsPage} de ${totalPages} (Total: ${adminProductsFiltered.length})</span>
+        <div class="flex gap-2">
+            <button class="btn btn-outline btn-sm px-3 py-1 text-[0.8rem]" onclick="window.changeAdminProductsPage(-1)" ${adminProductsPage === 1 ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>Anterior</button>
+            <button class="btn btn-outline btn-sm px-3 py-1 text-[0.8rem]" onclick="window.changeAdminProductsPage(1)" ${adminProductsPage === totalPages ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>Próxima</button>
+        </div>
+    `;
+}
+
+window.changeAdminProductsPage = function (direction) {
+    adminProductsPage += direction;
+    renderAdminProductsTable();
+};
+
+export async function loadAdminProducts() {
+    const tableBody = document.getElementById('admin-products-table');
+    if (!tableBody) return;
+
+    tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4">Carregando dados reais do Banco...</td></tr>';
+
+    try {
+        const { data: adminProducts, error } = await supabase
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        if (!adminProducts || adminProducts.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4 text-muted">Nenhum produto cadastrado ainda.</td></tr>';
+            return;
+        }
+
+        adminProductsData = adminProducts || [];
+        adminProductsFiltered = [...adminProductsData];
+        adminProductsPage = 1;
+        renderAdminProductsTable();
+
+        const searchInput = document.getElementById('admin-search-product');
+        if (searchInput) {
+            const newSearchInput = searchInput.cloneNode(true);
+            searchInput.parentNode.replaceChild(newSearchInput, searchInput);
+
+            newSearchInput.addEventListener('input', (e) => {
+                const term = e.target.value.toLowerCase().trim();
+                adminProductsFiltered = adminProductsData.filter(prod => {
+                    return prod.name.toLowerCase().includes(term);
+                });
+                adminProductsPage = 1;
+                renderAdminProductsTable();
             });
-        });
+        }
+
+    } catch (err) {
+        console.error("Erro ao puxar catálogo:", err);
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-red-500">Erro ao buscar catálogo.</td></tr>';
     }
 }
 
@@ -761,9 +809,89 @@ export function setupAdminProducts() {
     }
 }
 
-// -------------------------------------------------------------
-// HISTÓRICO DE ESTOQUE (KARDEX)
-// -------------------------------------------------------------
+// Paginação de Histórico de Estoque (Kardex)
+let adminKardexData = [];
+let adminKardexFiltered = [];
+let adminKardexPage = 1;
+const ADMIN_KARDEX_PER_PAGE = 10;
+
+function renderAdminKardexTable() {
+    const tableBody = document.getElementById('admin-kardex-table');
+    if (!tableBody) return;
+
+    if (!adminKardexFiltered || adminKardexFiltered.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="5" class="text-center">Nenhuma movimentação registrada.</td></tr>';
+        const paginationContainer = document.getElementById('admin-kardex-pagination');
+        if (paginationContainer) paginationContainer.innerHTML = '';
+        return;
+    }
+
+    const totalPages = Math.ceil(adminKardexFiltered.length / ADMIN_KARDEX_PER_PAGE);
+    if (adminKardexPage > totalPages) adminKardexPage = totalPages;
+    if (adminKardexPage < 1) adminKardexPage = 1;
+
+    const startIdx = (adminKardexPage - 1) * ADMIN_KARDEX_PER_PAGE;
+    const endIdx = startIdx + ADMIN_KARDEX_PER_PAGE;
+    const paginatedItems = adminKardexFiltered.slice(startIdx, endIdx);
+
+    tableBody.innerHTML = '';
+
+    paginatedItems.forEach(mov => {
+        const dateFmt = new Intl.DateTimeFormat('pt-BR', {
+            day: '2-digit', month: '2-digit', year: 'numeric',
+            hour: '2-digit', minute: '2-digit'
+        }).format(new Date(mov.created_at));
+
+        let colorClass = '';
+        let sign = '';
+        if (mov.quantity > 0) {
+            colorClass = 'text-[#4caf50] font-bold'; // Verde
+            sign = '+';
+        } else if (mov.quantity < 0) {
+            colorClass = 'text-[#f44336] font-bold'; // Vermelho
+        }
+
+        const prodName = mov.products ? mov.products.name : 'Produto Excluído';
+
+        tableBody.innerHTML += `
+         <tr class="kardex-row border-b border-[hsl(var(--text-secondary)/0.1)]">
+            <td data-label="Data Hora" class="py-[0.8rem] text-[0.85rem]">${dateFmt}</td>
+            <td data-label="Referência" class="kardex-search-name py-[0.8rem] font-bold">${prodName}</td>
+            <td data-label="Natureza Fiscal" class="py-[0.8rem] text-[0.85rem]">
+               <span class="bg-[hsl(var(--text-secondary)/0.1)] px-2 py-1 rounded">${mov.type.replace('_', ' ')}</span>
+            </td>
+            <td data-label="Qtd (Movimento)" class="py-[0.8rem] ${colorClass}">${sign}${mov.quantity}</td>
+            <td data-label="Balanço Final" class="py-[0.8rem] text-[0.9rem]">
+               <span class="text-muted text-[0.75rem]">(${mov.previous_stock} &rarr;)</span> 
+               <strong>${mov.current_stock}</strong>
+            </td>
+         </tr>
+      `;
+    });
+
+    let paginationContainer = document.getElementById('admin-kardex-pagination');
+    if (!paginationContainer) {
+        const tableWrapper = tableBody.closest('.overflow-x-auto');
+        paginationContainer = document.createElement('div');
+        paginationContainer.id = 'admin-kardex-pagination';
+        paginationContainer.className = 'flex justify-between items-center p-4 border-t border-border-dynamic/30';
+        tableWrapper.parentNode.insertBefore(paginationContainer, tableWrapper.nextSibling);
+    }
+
+    paginationContainer.innerHTML = `
+        <span class="text-[0.85rem] text-muted">Página ${adminKardexPage} de ${totalPages} (Total: ${adminKardexFiltered.length})</span>
+        <div class="flex gap-2">
+            <button class="btn btn-outline btn-sm px-3 py-1 text-[0.8rem]" onclick="window.changeAdminKardexPage(-1)" ${adminKardexPage === 1 ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>Anterior</button>
+            <button class="btn btn-outline btn-sm px-3 py-1 text-[0.8rem]" onclick="window.changeAdminKardexPage(1)" ${adminKardexPage === totalPages ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>Próxima</button>
+        </div>
+    `;
+}
+
+window.changeAdminKardexPage = function (direction) {
+    adminKardexPage += direction;
+    renderAdminKardexTable();
+};
+
 export async function loadKardex() {
     const tableBody = document.getElementById('admin-kardex-table');
     if (!tableBody) return;
@@ -778,7 +906,7 @@ export async function loadKardex() {
                 products ( name )
             `)
             .order('created_at', { ascending: false })
-            .limit(100); // Trazendo as últimas 100 para não pesar
+            .limit(100);
 
         if (error) throw error;
 
@@ -787,43 +915,11 @@ export async function loadKardex() {
             return;
         }
 
-        tableBody.innerHTML = '';
+        adminKardexData = movements || [];
+        adminKardexFiltered = [...adminKardexData];
+        adminKardexPage = 1;
+        renderAdminKardexTable();
 
-        movements.forEach(mov => {
-            const dateFmt = new Intl.DateTimeFormat('pt-BR', {
-                day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            }).format(new Date(mov.created_at));
-
-            // Tratamento de classes CSS condicional
-            let colorClass = '';
-            let sign = '';
-            if (mov.quantity > 0) {
-                colorClass = 'text-[#4caf50] font-bold'; // Verde
-                sign = '+';
-            } else if (mov.quantity < 0) {
-                colorClass = 'text-[#f44336] font-bold'; // Vermelho
-            }
-
-            const prodName = mov.products ? mov.products.name : 'Produto Excluído';
-
-            tableBody.innerHTML += `
-             <tr class="kardex-row border-b border-[hsl(var(--text-secondary)/0.1)]">
-                <td data-label="Data / Hora" class="py-[0.8rem] text-[0.85rem]">${dateFmt}</td>
-                <td data-label="Produto" class="kardex-search-name py-[0.8rem] font-bold">${prodName}</td>
-                <td data-label="Tipo" class="py-[0.8rem] text-[0.85rem]">
-                   <span class="bg-[hsl(var(--text-secondary)/0.1)] px-2 py-1 rounded">${mov.type.replace('_', ' ')}</span>
-                </td>
-                <td data-label="(Qtd.)" class="py-[0.8rem] ${colorClass}">${sign}${mov.quantity}</td>
-                <td data-label="Saldo Novo" class="py-[0.8rem] text-[0.9rem]">
-                   <span class="text-muted text-[0.75rem]">(${mov.previous_stock} &rarr;)</span> 
-                   <strong>${mov.current_stock}</strong>
-                </td>
-             </tr>
-          `;
-        });
-
-        // Event listener de Filtro (Busca Rápida Frontend)
         const searchInput = document.getElementById('admin-search-kardex');
         if (searchInput) {
             const newSearchInput = searchInput.cloneNode(true);
@@ -831,14 +927,12 @@ export async function loadKardex() {
 
             newSearchInput.addEventListener('input', (e) => {
                 const term = e.target.value.toLowerCase().trim();
-                const rows = tableBody.querySelectorAll('.kardex-row');
-                rows.forEach(row => {
-                    const nameCell = row.querySelector('.kardex-search-name');
-                    if (nameCell) {
-                        const text = nameCell.textContent.toLowerCase();
-                        row.style.display = text.includes(term) ? '' : 'none';
-                    }
+                adminKardexFiltered = adminKardexData.filter(mov => {
+                    const prodName = mov.products ? mov.products.name.toLowerCase() : 'produto excluído';
+                    return prodName.includes(term);
                 });
+                adminKardexPage = 1;
+                renderAdminKardexTable();
             });
         }
 

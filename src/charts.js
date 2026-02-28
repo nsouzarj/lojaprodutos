@@ -84,13 +84,15 @@ export async function renderAdminCharts() {
         let dynamicProductsSeries = [];
 
         try {
-            // Traz todos os itens vendidos junto com os dados do produto (para ler o departamento)
+            // Traz apenas itens vendidos de pedidos que EFETIVAMENTE foram pagos/concluídos
             const { data: orderItems, error: itemsErr } = await supabase
                 .from('order_items')
                 .select(`
                     quantity,
-                    products ( department )
-                `);
+                    products ( department ),
+                    orders!inner ( status )
+                `)
+                .in('orders.status', ['pago', 'enviado', 'entregue']);
 
             if (!itemsErr && orderItems) {
                 // Agrupa as quantidades por departamento
@@ -113,6 +115,49 @@ export async function renderAdminCharts() {
         } catch (e) {
             console.warn("Nao foi possivel carregar dados reais pro grafico de pizza:", e);
         }
+
+        // BUSCA DADOS REAIS DE FATURAMENTO NOS ÚLTIMOS 7 DIAS
+        let faturamentoData = [0, 0, 0, 0, 0, 0, 0];
+        let faturamentoCategorias = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom']; // Fallback
+
+        try {
+            const today = new Date();
+            const last7Days = [];
+            faturamentoCategorias = [];
+
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                last7Days.push(d);
+                let diaSemana = d.toLocaleDateString('pt-BR', { weekday: 'short' }).split(',')[0];
+                faturamentoCategorias.push(diaSemana.charAt(0).toUpperCase() + diaSemana.slice(1).replace('.', ''));
+            }
+
+            const startDate = new Date(last7Days[0]);
+            startDate.setHours(0, 0, 0, 0);
+
+            const { data: salesData } = await supabase
+                .from('orders')
+                .select('total, created_at')
+                .gte('created_at', startDate.toISOString())
+                .neq('status', 'cancelado');
+
+            if (salesData) {
+                salesData.forEach(sale => {
+                    const saleDate = new Date(sale.created_at);
+                    const index = last7Days.findIndex(d => d.getDate() === saleDate.getDate() && d.getMonth() === saleDate.getMonth());
+                    if (index !== -1) {
+                        faturamentoData[index] += parseFloat(sale.total);
+                    }
+                });
+            }
+        } catch (e) {
+            console.warn("Erro ao buscar dados reais de faturamento", e);
+        }
+
+        // Atualiza o gráfico de receitas com os dias calculados
+        optionsReceita.series[0].data = faturamentoData;
+        optionsReceita.xaxis.categories = faturamentoCategorias;
 
         // Se falhou ou nao teve vendas, mostra um fallback visual bonitinho
         if (dynamicProductsSeries.length === 0) {

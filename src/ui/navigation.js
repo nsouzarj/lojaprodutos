@@ -42,6 +42,23 @@ export function setupNavigation() {
         });
     }
 
+    const btnViewAll = document.querySelector('.view-all-link');
+    if (btnViewAll) {
+        btnViewAll.addEventListener('click', (e) => {
+            e.preventDefault();
+            const productsSection = document.querySelector('.products-section');
+            const sectionTitle = document.querySelector('.section-title');
+
+            if (sectionTitle) sectionTitle.textContent = "Catálogo Completo";
+
+            renderProducts('todos', null);
+
+            if (productsSection) {
+                productsSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        });
+    }
+
     const categoryLinks = document.querySelectorAll('.nav-link[data-category]');
     if (categoryLinks) {
         categoryLinks.forEach(link => {
