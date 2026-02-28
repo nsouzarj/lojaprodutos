@@ -13,7 +13,7 @@ A interface da **Loja V8** adere rigorosamente aos princípios de design de *Gla
 ### 🌟 Pilares da Experiência
 1. **Premium Aesthetics:** Cores vibrantes, sombras difusas e componentes que reagem fisicamente (escala e botões de brilho) à interação do usuário.  
 2. **"Single Page" Vibe:** Transições de views feitas via manipulação estrita do DOM, sem reloads (exceto ao finalizar auth para purgar sessões antigas de memória). 
-3. **Responsive by Default:** Cada tabela administrativa e grid de compras é adaptável; de grades massivas na web a fichas (Cards) na tela de celular, com o mínimo de confusão visual.
+3. **Responsive & Paginated by Default:** Cada tabela administrativa e grid de compras é adaptável; de grades massivas na web a fichas (Cards) na tela de celular, agora operando com **Paginação Flexível** (de 5 a 10 itens por view) para o máximo de performance com o mínimo de confusão visual, mesmo lidando com milhares de registros de vendas.
 
 ---
 
@@ -21,7 +21,7 @@ A interface da **Loja V8** adere rigorosamente aos princípios de design de *Gla
 
 * **Frontend Engine:** Vanilla JavaScript Puro (ESM Modules). 
 * **Marcação e Estilo:** Semantic HTML5 & CSS3 Avançado (Flex, Grid, CSS Variables nativas `hsl` e media queries severas). Sem Bootstrap ou Tailwind para máximo controle de cada pixel renderizado na tela.
-* **Componentização UI/UX:** `Flatpickr` (Selecionador inteligente de datas em relatórios gerenciais na Dashboard PT-BR).
+* **Componentização UI/UX:** `Flatpickr` (Selecionador inteligente de datas em relatórios gerenciais na Dashboard PT-BR) e `ApexCharts` para o Mix de Vendas.
 * **Backend, Auth & Database:** [Supabase](https://supabase.com) (PostgreSQL gerenciado). Autenticação, Row-Level-Security (RLS), Edge Functions, Webhooks SMTP e Storage Básico de assets.
 * **Build Tool:** Vite, configurado no motor ultra-rapide para bundling de produção visando distribuição nativa (`dist/`) com base para subdiretórios Apache. `npm run build` cria versão estática optimizada para Apache/Hostgator.
 
@@ -42,13 +42,14 @@ O projeto adere uma hierarquia estrita focada em **Módulos Limpos (Clean Module
 │   ├── lib/             # Scripts 3rd-party ou Engines de conexão (ex: Instância isolada do Supabase).
 │   ├── pages/           # Seções massivas do Sistema.
 │   │   ├── dashboard.html # Template do Painel de Admin/Meu Perfil com Injections via JS.
-│   │   └── store.html   # Template da vitrine com Grade principal.
+│   │   ├── store.html     # Template da vitrine com Grade principal.
+│   │   └── boleto-template.html # Molde de impressão PDF de boleto simulado para clientes.
 │   ├── services/        # 🧠 O Cérebro JS. Onde acontecem chamadas assíncronas para o DB.
-│   │   ├── auth.js      # Lidando c/ Session Tokens & Supabase-Login.
-│   │   ├── cart.js      # Cache Local via LocalStorage e controle estrito de carrinho.
-│   │   ├── orders.js    # Fetch MyOrders, Generate Admin Orders e Funil Financeiro e Relatórios (Mais Caro, Total Faturado, etc).
-│   │   ├── products.js  # CRUD do Supabase, máscaras BRL de moedas, calculo Custo. 
-│   │   └── profile.js   # Controle de Meus Dados Pessoais / Endereço (Profiles System).
+│   │   ├── auth.js      # Lidando c/ Session Tokens & Flow de Boas Vindas Restrito.
+│   │   ├── cart.js      # Cache Local via LocalStorage, Checkout, geração de Boleto.
+│   │   ├── orders.js    # Fetch MyOrders, Generate Admin Orders e Relatórios Precisos (Bypass de Pendentes).
+│   │   ├── products.js  # CRUD do Supabase, Kardex(Estoque), listagem Paginada do admin. 
+│   │   └── profile.js   # Controle de Meus Dados Pessoais / Endereço Obrigatório p/ Checkout.
 │   ├── ui/              # Handlers UI para Dialogos modais customizados que o navegador não faz.
 │   ├── main.js          # Cola de Injeção. Sabe como inicializar os modulos injetando todo o HTML assincronamente no body.
 │   └── style.css        # Todas Variáveis CSS mestres de Token do Design System. 
@@ -61,16 +62,17 @@ O projeto adere uma hierarquia estrita focada em **Módulos Limpos (Clean Module
 ## 🚀 Funcionalidades Chaves (Core Features)
 
 ### Para o Comprador 🛒:
-- Catálogo Responsivo com Filtros Laterais Inteligentes.
-- Carrinho de Compras em modal persistente (usando LocalStorage, não perca nunca seus itens recarregando a página).
-- Perfis Integrados com máscaras de CPF / Endereço Completo, e listagem rápida com Rastreamento das `Minhas Compras`.
-- Gateway Simulado: Transições fluidas da escolha até o botão mágico do pagamento!
+- **Catálogo Responsivo** com Filtros Laterais Inteligentes e Busca em tempo Real "Ver Todos".
+- **Carrinho de Compras** em modal persistente (usando LocalStorage, não perca nunca seus itens recarregando a página).
+- **Perfis com Cadastro Obrigatório Inteligente:** O checkout intercepta clientes e os bloqueia de finalizar a compra se eles não tiverem um Telefone e um CEP configurados, guiando-os ao Dashboard suavemente para completar a conta.
+- **Gateway Gateway com Boleto Simulado:** Geração realística de boleto em PDF com data de vencimento calculada, trava contra finais de semana, cálculo de mora/multa e simulação de código de barras pagável gerado restritamente por autenticação.
+- **Minhas Compras:** Rastreamento do histórico visual organizado em páginas curtas de 5 itens para Mobile-first efficiency.
 
 ### Para o Administrador/Vendedor 👑:
-- **Relatório de Funil Financeiro Exclusivo:** Acesso na Dashboard a Receitas Brutas com filtros por Range de Datas, Mostruário Mais Vendido, Mais Caro, e métricas em tempo real sobre Pedidos Pendentes, Pagos e Enviados. 
-- Gestão Simplificada do Catálogo com possibilidade extra: **Inclusão do Preço de Custo Oculto** do seu estoque, que o cliente não vê. Permite ao gerente visualizar o ROI facilmente. 
-- Atualização em massa de status (`Aguardando Pagamento` -> `Enviado`) c/ registro de log imediato.
-- Visão Responsiva por "Fichas" de Controle no dispositivo Móvel sem rolagem horizontal bizarra. Lê tudo num format "Card-Table!".
+- **Tabelas de Gestão Paginadas:** Clientes, Kardex, Vendas e Catálogo operam sob uma matriz de Paginação Frontend inteligente. A busca varre todo o array do catálogo e redesenha sua página instantaneamente aos milhares. Nenhuma tabela "quebra" a tela ou cria scrolls de milhares de pixels num celular.
+- **Relatório de Funil Financeiro de Extrema Precisão:** Acesso na Dashboard a Receitas Brutas com filtros por Range de Datas. O Gráfico "Mix de Vendas" possui exclusão inteligente: ele retira sumariamente qualquer pedido faturado que ainda esteja constando como "Cancelado" ou "Pendente" (Aguardando pagode) no banco de dados. Você só enxerga fatias de itens onde o dinheiro já pingou na conta.
+- **Gestão Simplificada do Catálogo** com possibilidade extra: **Inclusão do Preço de Custo Oculto** do seu estoque, que o cliente não vê. Permite ao gerente visualizar o ROI facilmente. 
+- Atualização unitária de status rápida com devolução automática do produto cancelado para o fluxo do Estoque do sistema, reativando a reposição sem intervenção.
 
 ---
 
@@ -100,6 +102,6 @@ npm run dev
 
 ## 🔒 Segurança (RLS e Supabase)
 
-Toda manipulação sensível no banco (como deletar ou apagar produtos, mudar order_status, ou ler Relatórios de Gestão) dependem das `Row Level Security (RLS) policies` ativas no Supabase. Modos de **Admin e Vendedor** controlam o painel, não via Frontend JS hackeáveis, mas pelo Schema restrito associado aos Tokens de Oauth emitidos pelo banco de dados aos Perfis corretos da Loja, validando JWT secretamente! 
+Toda manipulação sensível no banco (como deletar ou apagar produtos, ler Relatórios de Gestão, ou gerar visualizações de boletos .html alheios) dependem das `Row Level Security (RLS) policies` ativas no Supabase. Modos de **Admin e Vendedor** controlam o painel, não via Frontend JS hackeáveis, mas pelo Schema restrito associado aos Tokens de Oauth emitidos pelo banco de dados aos Perfis corretos da Loja, validando JWT secretamente! 
 
-O arquivo `services/auth.js` gerencia as sessões persistentes com base neste fluxo restritivo. Dependendo da sua role informada, até a tabela de Produtos retorna informações exclusivas baseadas em seu JWT.
+O arquivo `services/auth.js` gerencia as sessões persistentes com base neste fluxo restritivo e inteligente (Redirecionando usuários de completude em completude). Dependendo da sua role informada, até a tabela de Produtos retorna informações exclusivas baseadas em seu JWT.
