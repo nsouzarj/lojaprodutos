@@ -29,7 +29,7 @@ A interface da **Loja V8** adere rigorosamente aos princípios de design de *Gla
 
 ## 🏗️ Estrutura de Pastas e Arquitetura do Frontend
 
-O projeto adere uma hierarquia estrita focada em **Módulos Limpos (Clean Modules)**. Os arquivos de regras de negócio (Serviços) nunca misturam os de Views (Páginas/Modalidades):
+O projeto adere uma hierarquia estrita focada em **Módulos Limpos (Clean Modules)**. Os arquivos de regras de negócio (Serviços) nunca misturam os de Views (Páginas/Modalidades) e seguem **Princípios SOLID** (Single Responsibility e Dependency Inversion), concentrando acesso direto ao backend em uma camada de Repositórios dedicada:
 
 ```text
 /
@@ -44,11 +44,12 @@ O projeto adere uma hierarquia estrita focada em **Módulos Limpos (Clean Module
 │   │   ├── dashboard.html # Template do Painel de Admin/Meu Perfil com Injections via JS.
 │   │   ├── store.html     # Template da vitrine com Grade principal.
 │   │   └── boleto-template.html # Molde de impressão PDF de boleto simulado para clientes.
-│   ├── services/        # 🧠 O Cérebro JS. Onde acontecem chamadas assíncronas para o DB.
+│   ├── repositories/    # Camada de Acesso a Dados isolada (DIP). Encapsula chamadas cruas SQL/Supabase.
+│   ├── services/        # 🧠 O Cérebro JS. Onde acontecem chamadas de negócio abstratas, injetando interfaces do Repositório.
 │   │   ├── auth.js      # Lidando c/ Session Tokens & Flow de Boas Vindas Restrito.
 │   │   ├── cart.js      # Cache Local via LocalStorage, Checkout, geração de Boleto.
 │   │   ├── orders.js    # Fetch MyOrders, Generate Admin Orders e Relatórios Precisos (Bypass de Pendentes).
-│   │   ├── products.js  # CRUD do Supabase, Kardex(Estoque), listagem Paginada do admin. 
+│   │   ├── products.js  # CRUD de Produtos delegados aos Repositórios, Kardex(Estoque), listagem. 
 │   │   └── profile.js   # Controle de Meus Dados Pessoais / Endereço Obrigatório p/ Checkout.
 │   ├── ui/              # Handlers UI para Dialogos modais customizados que o navegador não faz.
 │   ├── main.js          # Cola de Injeção. Sabe como inicializar os modulos injetando todo o HTML assincronamente no body.
@@ -56,6 +57,7 @@ O projeto adere uma hierarquia estrita focada em **Módulos Limpos (Clean Module
 ├── index.html           # Root Container e ponto de montagem do Vite.
 └── vite.config.js       # Regras de build.
 ```
+
 
 ---
 

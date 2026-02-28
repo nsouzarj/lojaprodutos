@@ -1,22 +1,19 @@
-import { supabase } from '../lib/supabase.js';
+import * as repo from '../repositories/authRepository.js';
+import { supabase } from '../lib/supabase.js'; // Apenas para checar ordersCount (isso deve ir pro orderRepo dps)
 import { loadMyOrders } from './orders.js';
 import { showDialog } from '../ui/dialog.js';
 
 export async function checkSession() {
     const btnLogin = document.getElementById('btn-login');
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await repo.getSession();
 
     if (session && session.user) {
         const fullName = session.user.user_metadata?.full_name || 'Minha Conta';
         const firstName = fullName.split(' ')[0];
 
         // Buscar Role no DB (Profiles)
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+        const { data: profile } = await repo.getProfile(session.user.id);
 
         const userRole = profile?.role || 'comprador';
 
@@ -74,7 +71,7 @@ export function setupAuth() {
     if (btnLogin && authModal) {
         btnLogin.addEventListener('click', async (e) => {
             e.preventDefault();
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await repo.getSession();
 
             if (session) {
                 // Em vez de só sair, se a pessoa clicar no proprio nome a gente abre o Dashboard
@@ -95,7 +92,7 @@ export function setupAuth() {
                         if (btnRealLogout) {
                             btnRealLogout.addEventListener('click', (ev) => {
                                 ev.stopPropagation(); // Evitar duplo click
-                                supabase.auth.signOut().then(() => {
+                                repo.signOut().then(() => {
                                     window.location.href = import.meta.env.BASE_URL || '/';
                                 });
                             });
@@ -114,7 +111,7 @@ export function setupAuth() {
 
             // Caso contrário (deslogado)
             if (btnLogin.textContent.trim() === 'Sair') {
-                supabase.auth.signOut().then(() => {
+                repo.signOut().then(() => {
                     window.location.href = import.meta.env.BASE_URL || '/';
                 });
                 return;
@@ -186,13 +183,7 @@ export function setupAuth() {
             btnSubmit.classList.add('btn-loading');
             btnSubmit.disabled = true;
 
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: { full_name: name, }
-                }
-            });
+            const { data, error } = await repo.signUp(email, password, name);
 
             btnSubmit.disabled = false;
             btnSubmit.classList.remove('btn-loading');
@@ -217,10 +208,7 @@ export function setupAuth() {
             btnSubmit.classList.add('btn-loading');
             btnSubmit.disabled = true;
 
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
+            const { data, error } = await repo.signIn(email, password);
 
             btnSubmit.disabled = false;
             btnSubmit.classList.remove('btn-loading');
@@ -294,7 +282,7 @@ export function setupAuth() {
     // Set initial state
     checkSession();
 
-    supabase.auth.onAuthStateChange((event, session) => {
+    repo.onAuthStateChange((event, session) => {
         if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
             checkSession();
         }

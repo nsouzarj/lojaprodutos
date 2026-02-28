@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.js';
+import * as repo from '../repositories/productRepository.js';
 
 export async function submitRating(productId, ratingValue) {
     const { data: { session } } = await supabase.auth.getSession();
@@ -9,11 +10,7 @@ export async function submitRating(productId, ratingValue) {
     }
 
     try {
-        const { error } = await supabase.from('product_reviews').upsert({
-            product_id: productId,
-            user_id: session.user.id,
-            rating: ratingValue
-        }, { onConflict: 'product_id, user_id' }); // Se a pessoa já votou, ele atualiza a nota dela, não duplica.
+        const { error } = await repo.submitProductRating(productId, session.user.id, ratingValue);
 
         if (error) throw error;
 
@@ -26,10 +23,7 @@ export async function submitRating(productId, ratingValue) {
 
 export async function getProductRating(productId) {
     try {
-        const { data, error } = await supabase
-            .from('product_reviews')
-            .select('rating')
-            .eq('product_id', productId);
+        const { data, error } = await repo.getProductRating(productId);
 
         if (error) throw error;
 

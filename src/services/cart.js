@@ -1,4 +1,6 @@
-import { supabase } from '../lib/supabase.js';
+import * as authRepo from '../repositories/authRepository.js';
+import * as orderRepo from '../repositories/orderRepository.js';
+import * as productRepo from '../repositories/productRepository.js';
 import { loadMyOrders } from './orders.js';
 import { showDialog } from '../ui/dialog.js';
 import { loadUserProfile } from './profile.js';
@@ -248,7 +250,7 @@ export function setupCart() {
             }
 
             // Checa Usuário Logado
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await authRepo.getSession();
 
             if (!session) {
                 showDialog("Restrito", "Você precisa fazer Login antes de finalizar a compra!", true);
@@ -351,7 +353,7 @@ export function setupCart() {
             btnConfirmPayment.classList.add('btn-loading');
             btnConfirmPayment.disabled = true;
 
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session } } = await authRepo.getSession();
             const method = document.getElementById('payment-method').value;
 
             const totalPix = cart.reduce((acc, item) => acc + (item.product.price * item.quantity), 0);
@@ -386,19 +388,15 @@ export function setupCart() {
                 if (method === 'cartao_credito') finalStatus = 'pago'; // Se for cartão, mockamos como aprovado de imeadiato :)
                 if (method === 'pix') finalStatus = 'enviado'; // PIX despacha na hora, conforme solicitado pelo lojista
 
-                const { data: orderData, error: orderError } = await supabase
-                    .from('orders')
-                    .insert([{
-                        user_id: session.user.id,
-                        total: finalComputedValue,
-                        status: finalStatus,
-                        payment_method: method,
-                        delivery_address: fullAddress,
-                        boleto_due_date: finalDueDate,
-                        boleto_barcode: finalBarcode
-                    }])
-                    .select()
-                    .single();
+                const { data: orderData, error: orderError } = await orderRepo.insertOrder({
+                    user_id: session.user.id,
+                    total: finalComputedValue,
+                    status: finalStatus,
+                    payment_method: method,
+                    delivery_address: fullAddress,
+                    boleto_due_date: finalDueDate,
+                    boleto_barcode: finalBarcode
+                });
 
                 if (orderError) throw orderError;
 
@@ -410,30 +408,21 @@ export function setupCart() {
                     price_at_time: item.product.price
                 }));
 
-                const { error: itemsError } = await supabase
-                    .from('order_items')
-                    .insert(orderItems);
+                const { error: itemsError } = await orderRepo.insertOrderItems(orderItems);
 
                 if (itemsError) throw itemsError;
 
                 // 3. ATUALIZAÇÃO DE ESTOQUE (Baixa Automática com Saldo Atualizado)
                 for (const item of cart) {
                     // Busca o estoque MAIS RECENTE do banco de dados (evita usar o cache do carrinho)
-                    const { data: p } = await supabase
-                        .from('products')
-                        .select('stock')
-                        .eq('id', item.product.id)
-                        .single();
+                    const { data: p } = await productRepo.fetchProductStock(item.product.id);
 
                     if (p) {
                         const newStock = Math.max(0, p.stock - item.quantity);
-                        await supabase
-                            .from('products')
-                            .update({ stock: newStock })
-                            .eq('id', item.product.id);
+                        await productRepo.updateProduct(item.product.id, { stock: newStock });
 
                         // REGISTRO DE HISTÓRICO
-                        await supabase.from('stock_movements').insert([{
+                        await productRepo.registerStockMovement({
                             product_id: item.product.id,
                             quantity: -item.quantity, // Negativo pois é saída
                             type: 'VENDA',
@@ -441,7 +430,7 @@ export function setupCart() {
                             current_stock: newStock,
                             order_id: orderData.id,
                             user_id: session.user.id
-                        }]);
+                        });
                     }
                 }
 

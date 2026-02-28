@@ -1,4 +1,5 @@
-import { supabase } from '../lib/supabase.js';
+import * as repo from '../repositories/productRepository.js';
+import { supabase } from '../lib/supabase.js'; // Temporario pra auth. Depois movemos.
 import { addToCart } from './cart.js';
 import { showDialog } from '../ui/dialog.js';
 import { getProductRating, submitRating } from './reviews.js';
@@ -29,17 +30,7 @@ export async function renderProducts(categoryFilter = 'todos', tagFilter = null)
     container.innerHTML = `<div class="col-span-full text-center p-8">Carregando ${tagFilter ? 'Ofertas' : 'Produtos'}...</div>`;
 
     try {
-        let query = supabase.from('products').select('*');
-
-        if (categoryFilter !== 'todos') {
-            query = query.eq('department', categoryFilter);
-        }
-
-        if (tagFilter) {
-            query = query.ilike('tag', `%${tagFilter}%`);
-        }
-
-        const { data: realProducts, error } = await query.order('created_at', { ascending: false });
+        const { data: realProducts, error } = await repo.fetchProducts(categoryFilter, tagFilter);
 
         if (error || !realProducts || realProducts.length === 0) {
             console.warn("Nenhum dado real no Supabase ou Erro. Mostrando dados locais provisiorios.");
@@ -393,10 +384,7 @@ export async function loadAdminProducts() {
     tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4">Carregando dados reais do Banco...</td></tr>';
 
     try {
-        const { data: adminProducts, error } = await supabase
-            .from('products')
-            .select('*')
-            .order('created_at', { ascending: false });
+        const { data: adminProducts, error } = await repo.fetchAllProducts();
 
         if (error) throw error;
 
@@ -567,16 +555,12 @@ async function uploadToSupabase(files, department) {
         const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
         const filePath = `${department}/${fileName}`;
 
-        const { data, error } = await supabase.storage
-            .from('produtos')
-            .upload(filePath, compressed);
+        const { data, error } = await repo.uploadProductImage(filePath, compressed);
 
         if (error) throw error;
 
         // Pegar a URL pública do arquivo
-        const { data: { publicUrl } } = supabase.storage
-            .from('produtos')
-            .getPublicUrl(filePath);
+        const { data: { publicUrl } } = repo.getPublicUrl(filePath);
 
         uploadedUrls.push(publicUrl);
     }
@@ -685,14 +669,14 @@ export function setupAdminProducts() {
 
                 let errorResp;
                 if (productId) {
-                    const { error } = await supabase.from('products').update({
+                    const { error } = await repo.updateProduct(productId, {
                         name, price, stock, department, gender, image_url, description, credit_price, installments, card_brands, tag, cost_price
-                    }).eq('id', productId);
+                    });
                     errorResp = error;
                 } else {
-                    const { error } = await supabase.from('products').insert([{
+                    const { error } = await repo.insertProduct({
                         name, price, stock, department, gender, image_url, description, credit_price, installments, card_brands, tag, cost_price
-                    }]);
+                    });
                     errorResp = error;
                 }
 
@@ -756,11 +740,7 @@ export function setupAdminProducts() {
 
             try {
                 // 1. Puxar estoque atual direto do banco para evitar conflitos
-                const { data: pData, error: pError } = await supabase
-                    .from('products')
-                    .select('stock')
-                    .eq('id', productId)
-                    .single();
+                const { data: pData, error: pError } = await repo.fetchProductStock(productId);
 
                 if (pError) throw pError;
 
@@ -768,13 +748,10 @@ export function setupAdminProducts() {
                 const finalStock = currentStock + qtyToAdd;
 
                 // 2. Atualizar Produto (Estoque Novo + Custo Novo)
-                const { error: updateError } = await supabase
-                    .from('products')
-                    .update({
-                        stock: finalStock,
-                        cost_price: newCost
-                    })
-                    .eq('id', productId);
+                const { error: updateError } = await repo.updateProduct(productId, {
+                    stock: finalStock,
+                    cost_price: newCost
+                });
 
                 if (updateError) throw updateError;
 
@@ -782,14 +759,14 @@ export function setupAdminProducts() {
                 const { data: { session } } = await supabase.auth.getSession();
                 const userId = session?.user?.id;
 
-                await supabase.from('stock_movements').insert([{
+                await repo.registerStockMovement({
                     product_id: productId,
                     quantity: qtyToAdd, // Entrada positiva
                     type: 'ENTRADA_REPOSICAO',
                     previous_stock: currentStock,
                     current_stock: finalStock,
                     user_id: userId
-                }]);
+                });
 
                 showDialog("Reposição Sucesso 📦", `Adicionado ${qtyToAdd} un. ao estoque!`, false);
                 restockModal.classList.remove('active');

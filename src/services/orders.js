@@ -1,4 +1,5 @@
-import { supabase } from '../lib/supabase.js';
+import * as repo from '../repositories/orderRepository.js';
+import * as authRepo from '../repositories/authRepository.js';
 import { showDialog } from '../ui/dialog.js';
 
 // Paginação Minhas Compras (Usuário)
@@ -88,7 +89,7 @@ export async function loadMyOrders() {
     const tableBody = document.getElementById('my-orders-table');
     if (!tableBody) return;
 
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await authRepo.getSession();
 
     if (!session) {
         tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-4">Faça login para ver suas compras.</td></tr>';
@@ -98,11 +99,7 @@ export async function loadMyOrders() {
     tableBody.innerHTML = '<tr><td colspan="6" class="text-center p-4">Carregando histórico...</td></tr>';
 
     try {
-        const { data: myOrders, error } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('user_id', session.user.id)
-            .order('created_at', { ascending: false });
+        const { data: myOrders, error } = await repo.fetchUserOrders(session.user.id);
 
         if (error) throw error;
 
@@ -144,11 +141,7 @@ window.viewOrderDetails = async function (orderId) {
 
     try {
         // Busca o pedido pai
-        const { data: order, error: errO } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('id', orderId)
-            .single();
+        const { data: order, error: errO } = await repo.fetchOrderDetails(orderId);
 
         if (errO) throw errO;
 
@@ -164,15 +157,7 @@ window.viewOrderDetails = async function (orderId) {
         document.getElementById('modal-order-total').innerText = priceFmt(order.total);
 
         // Busca os itens vinculados e produtos
-        const { data: items, error: errI } = await supabase
-            .from('order_items')
-            .select(`
-                id, 
-                quantity, 
-                price_at_time,
-                products:product_id (name, image_url)
-            `)
-            .eq('order_id', orderId);
+        const { data: items, error: errI } = await repo.fetchOrderItems(orderId);
 
         if (errI) throw errI;
 
@@ -318,31 +303,21 @@ export async function loadAdminOrders() {
         today.setHours(0, 0, 0, 0);
 
         // 1. Buscar Estatísticas
-        const { data: todayOrders } = await supabase
-            .from('orders')
-            .select('total')
-            .gte('created_at', today.toISOString())
-            .neq('status', 'cancelado');
+        const { data: todayOrders } = await repo.getDashboardTodayOrders(today.toISOString());
 
         if (todayOrders) {
             const totalCaixa = todayOrders.reduce((acc, curr) => acc + parseFloat(curr.total), 0);
             if (caixaHojeEl) caixaHojeEl.textContent = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(totalCaixa);
         }
 
-        const { count } = await supabase
-            .from('orders')
-            .select('*', { count: 'exact', head: true })
-            .eq('status', 'pendente');
+        const { count } = await repo.countPendingOrders();
 
         if (count !== null && pedidosPendentesEl) {
             pedidosPendentesEl.textContent = count;
         }
 
         // 2. Buscar Todos os Pedidos
-        const { data: allOrders, error: errorOrders } = await supabase
-            .from('orders')
-            .select(`*, profiles: user_id(full_name)`)
-            .order('created_at', { ascending: false });
+        const { data: allOrders, error: errorOrders } = await repo.fetchAllOrdersAdmin();
 
         if (errorOrders) throw errorOrders;
 
@@ -380,21 +355,13 @@ window.updateOrderStatus = async function (idDoPedido, botao) {
 
     try {
         // 1. BUSCA ESTADO ATUAL (Para regra de estoque)
-        const { data: currentOrder, error: fetchError } = await supabase
-            .from('orders')
-            .select('status')
-            .eq('id', idDoPedido)
-            .single();
+        const { data: currentOrder, error: fetchError } = await repo.checkOrderStatus(idDoPedido);
 
         if (fetchError) throw fetchError;
         const statusAnterior = currentOrder.status;
 
         // 2. OPERAÇÃO DE ATUALIZAÇÃO NO BANCO
-        const { error, data } = await supabase
-            .from('orders')
-            .update({ status: novoStatus })
-            .eq('id', idDoPedido)
-            .select();
+        const { error, data } = await repo.updateOrderStatus(idDoPedido, novoStatus);
 
         if (error) {
             console.error("Erro no Supabase:", error);
@@ -412,45 +379,45 @@ window.updateOrderStatus = async function (idDoPedido, botao) {
             // 3. REGRA DE NEGÓCIO: MOVIMENTAÇÃO DE ESTOQUE
             // Se mudou para CANCELADO (e não era), devolve ao estoque
             if (novoStatus === 'cancelado' && statusAnterior !== 'cancelado') {
-                const { data: items } = await supabase.from('order_items').select('product_id, quantity').eq('order_id', idDoPedido);
+                const { data: items } = await repo.fetchOrderItemsForStockUpdate(idDoPedido);
                 if (items) {
                     for (const item of items) {
-                        const { data: p } = await supabase.from('products').select('stock').eq('id', item.product_id).single();
+                        const { data: p } = await repo.getProductStock(item.product_id);
                         if (p) {
                             const newStock = p.stock + item.quantity;
-                            await supabase.from('products').update({ stock: newStock }).eq('id', item.product_id);
+                            await repo.updateProductStock(item.product_id, newStock);
 
                             // HISTÓRICO: DEVOLUÇÃO
-                            await supabase.from('stock_movements').insert([{
+                            await repo.addStockMovement({
                                 product_id: item.product_id,
                                 quantity: item.quantity,
                                 type: 'CANCELAMENTO',
                                 previous_stock: p.stock,
                                 current_stock: newStock,
                                 order_id: idDoPedido
-                            }]);
+                            });
                         }
                     }
                 }
             }
             else if (statusAnterior === 'cancelado' && novoStatus !== 'cancelado') {
-                const { data: items } = await supabase.from('order_items').select('product_id, quantity').eq('order_id', idDoPedido);
+                const { data: items } = await repo.fetchOrderItemsForStockUpdate(idDoPedido);
                 if (items) {
                     for (const item of items) {
-                        const { data: p } = await supabase.from('products').select('stock').eq('id', item.product_id).single();
+                        const { data: p } = await repo.getProductStock(item.product_id);
                         if (p) {
                             const newStock = Math.max(0, p.stock - item.quantity);
-                            await supabase.from('products').update({ stock: newStock }).eq('id', item.product_id);
+                            await repo.updateProductStock(item.product_id, newStock);
 
                             // HISTÓRICO: RE-RETIRADA
-                            await supabase.from('stock_movements').insert([{
+                            await repo.addStockMovement({
                                 product_id: item.product_id,
                                 quantity: -item.quantity,
                                 type: 'REATIVAÇÃO_PEDIDO',
                                 previous_stock: p.stock,
                                 current_stock: newStock,
                                 order_id: idDoPedido
-                            }]);
+                            });
                         }
                     }
                 }
@@ -485,12 +452,9 @@ window.deleteOrder = async function (idDoPedido, botao) {
 
             try {
                 // Remove itens do pedido primeiro (devido a foreign keys)
-                await supabase.from('order_items').delete().eq('order_id', idDoPedido);
+                await repo.deleteOrderItems(idDoPedido);
 
-                const { error } = await supabase
-                    .from('orders')
-                    .delete()
-                    .eq('id', idDoPedido);
+                const { error } = await repo.deleteOrder(idDoPedido);
 
                 if (error) throw error;
 
@@ -516,9 +480,7 @@ export async function loadAdminReports(startDate = '', endDate = '') {
     reportPanel.innerHTML = '<p class="text-muted animate-pulse">Processando dados financeiros...</p>';
 
     try {
-        const { data: products, error } = await supabase
-            .from('products')
-            .select('*');
+        const { data: products, error } = await repo.loadProductsForReports();
 
         if (error) throw error;
         if (!products || products.length === 0) {
@@ -531,17 +493,7 @@ export async function loadAdminReports(startDate = '', endDate = '') {
         const priceFmt = (val) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
         // Fetch Sales/Pedidos
-        let salesQuery = supabase.from('orders').select('total, status, created_at');
-
-        // Aplica Filtros de Data
-        if (startDate) {
-            salesQuery = salesQuery.gte('created_at', `${startDate}T00:00:00.000Z`);
-        }
-        if (endDate) {
-            salesQuery = salesQuery.lte('created_at', `${endDate}T23: 59: 59.999Z`);
-        }
-
-        const { data: sales, error: salesError } = await salesQuery;
+        const { data: sales, error: salesError } = await repo.fetchFilteredSales(startDate, endDate);
 
         if (salesError) throw salesError;
 
@@ -563,10 +515,7 @@ export async function loadAdminReports(startDate = '', endDate = '') {
         });
 
         // Fetch Itens para descobrir o Produto Mais Vendido (Apenas vendas firmes)
-        const { data: orderItems } = await supabase
-            .from('order_items')
-            .select('product_id, quantity, orders!inner(status)')
-            .in('orders.status', ['pago', 'enviado', 'entregue']);
+        const { data: orderItems } = await repo.fetchBestSellingItems();
         let bestSellingProduct = { name: 'Sem Vendas', qtd: 0 };
 
         if (orderItems && orderItems.length > 0) {

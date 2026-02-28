@@ -1,16 +1,12 @@
-import { supabase } from '../lib/supabase.js';
+import * as authRepo from '../repositories/authRepository.js';
 import { showDialog } from '../ui/dialog.js';
 
 export async function loadUserProfile() {
-    const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await authRepo.getSession();
     if (!session) return null;
 
     try {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+        const { data, error } = await authRepo.getProfile(session.user.id);
 
         if (error) throw error;
         return data;
@@ -55,7 +51,7 @@ export async function setupProfile() {
         btnSubmit.classList.add('btn-loading');
         btnSubmit.disabled = true;
 
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await authRepo.getSession();
 
         if (!session) {
             showDialog("Erro de Acesso", "Você foi deslogado. Relogue e tente novamente.", true);
@@ -63,13 +59,13 @@ export async function setupProfile() {
         }
 
         try {
-            const { error } = await supabase.from('profiles').update({
+            const { error } = await authRepo.updateProfile(session.user.id, {
                 full_name,
                 phone,
                 zipcode,
                 address,
                 city
-            }).eq('id', session.user.id);
+            });
 
             if (error) throw error;
 
@@ -166,10 +162,7 @@ export async function loadAdminUsers() {
     tableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">Carregando usuários...</td></tr>';
 
     try {
-        const { data: users, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .order('full_name', { ascending: true });
+        const { data: users, error } = await authRepo.fetchAllProfiles();
 
         if (error) throw error;
 
