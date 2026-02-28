@@ -312,14 +312,23 @@ h4 {
     visibility: visible;
   }
 
+  .logo {
+    font-size: 1.15rem;
+  }
+
   .btn-mobile {
     display: inline-flex !important;
+    padding: 0.4rem;
+  }
+
+  .btn-icon {
+    padding: 0.4rem;
   }
 
   #btn-login {
     padding: 0.4rem 0.6rem;
-    font-size: 0.8rem;
-    max-width: 130px;
+    font-size: 0.75rem;
+    max-width: 85px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -397,6 +406,8 @@ h4 {
   animation: fadeIn 1.2s ease forwards;
   animation-delay: 0.2s;
   opacity: 0;
+  margin-top: -3rem;
+  /* Sobe a imagem colando-a mais no grid do nav */
 }
 
 .glass-card {
