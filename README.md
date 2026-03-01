@@ -8,7 +8,7 @@ Um sistema de E-Commerce completo, minimalista e de alta performance desenvolvid
 ---
 
 ## 🎨 O Projeto
-A interface da **Loja V8** adere rigorosamente aos princípios de design de *Glassmorphism*, paletas monocromáticas escuras com contrastes vivos (`hsl(var(--accent-color))`), micro-animações dinâmicas e **total responsividade** desde Desktops 4K até os menores smartphones, permitindo tanto que o cliente compre com prazer, quanto o administrador gerencie todo o sistema utilizando apenas os polegares na tela.
+A interface da **Loja VIRTUS** adere rigorosamente aos princípios de design de *Glassmorphism*, paletas monocromáticas escuras com contrastes vivos (`hsl(var(--accent-color))`), micro-animações dinâmicas e **total responsividade** desde Desktops 4K até os menores smartphones, permitindo tanto que o cliente compre com prazer, quanto o administrador gerencie todo o sistema utilizando apenas os polegares na tela.
 
 ### 🌟 Pilares da Experiência
 1. **Premium Aesthetics:** Cores vibrantes, sombras difusas e componentes que reagem fisicamente (escala e botões de brilho) à interação do usuário.  
