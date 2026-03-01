@@ -31,9 +31,9 @@ export async function checkSession() {
 
         if (btnLogin) {
             if (document.getElementById('view-dashboard') && document.getElementById('view-dashboard').style.display === 'block') {
-                btnLogin.innerHTML = `◀ Voltar <span class="hide-mobile">pra Loja</span> &nbsp;|&nbsp; Sair`;
+                btnLogin.innerHTML = `◀ Voltar <span class="hide-mobile">&nbsp;pra Loja</span> &nbsp;|&nbsp; Sair`;
             } else {
-                btnLogin.innerHTML = `👤 <b>${firstName}</b> <span class="hide-mobile">(Painel)</span>`;
+                btnLogin.innerHTML = `👤 <b>${firstName}</b> <span class="hide-mobile">&nbsp;(Painel)</span>`;
             }
         }
 
@@ -84,7 +84,7 @@ export function setupAuth() {
                     viewStore.style.display = 'none';
                     if (iconCart) iconCart.style.display = 'none';
                     viewDash.style.display = 'block';
-                    btnLogin.innerHTML = `◀ Voltar <span class="hide-mobile">pra Loja</span> &nbsp;|&nbsp; <span id="btn-real-logout" style="cursor:pointer; color:red;">Sair</span>`;
+                    btnLogin.innerHTML = `◀ Voltar <span class="hide-mobile">&nbsp;pra Loja</span> &nbsp;|&nbsp; <span id="btn-real-logout" style="cursor:pointer; color:red;">Sair</span>`;
 
                     // Adiciona listening no botao sair vermelho
                     setTimeout(() => {

@@ -381,7 +381,39 @@ export async function loadAdminProducts() {
     const tableBody = document.getElementById('admin-products-table');
     if (!tableBody) return;
 
-    tableBody.innerHTML = '<tr><td colspan="7" class="text-center p-4">Carregando dados reais do Banco...</td></tr>';
+    // SKELETON LOADER
+    tableBody.innerHTML = `
+        <tr class="animate-pulse">
+            <td class="p-4"><div class="h-10 w-10 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+            <td class="p-4"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div></td>
+            <td class="p-4"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div></td>
+            <td class="p-4"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div></td>
+            <td class="p-4"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div></td>
+            <td class="p-4"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div></td>
+            <td class="p-4"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div></td>
+            <td class="p-4">
+                <div class="flex gap-2 justify-end">
+                  <div class="h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                  <div class="h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                </div>
+            </td>
+        </tr>
+        <tr class="animate-pulse">
+            <td class="p-4"><div class="h-10 w-10 bg-slate-200 dark:bg-slate-700 rounded"></div></td>
+            <td class="p-4"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-2/3"></div></td>
+            <td class="p-4"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div></td>
+            <td class="p-4"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div></td>
+            <td class="p-4"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div></td>
+            <td class="p-4"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div></td>
+            <td class="p-4"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div></td>
+             <td class="p-4">
+                <div class="flex gap-2 justify-end">
+                  <div class="h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                  <div class="h-6 w-16 bg-slate-200 dark:bg-slate-700 rounded"></div>
+                </div>
+            </td>
+        </tr>
+    `;
 
     try {
         const { data: adminProducts, error } = await repo.fetchAllProducts();

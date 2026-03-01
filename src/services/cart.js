@@ -289,7 +289,7 @@ export function setupCart() {
                     if (dashPerfilPanel) dashPerfilPanel.style.display = 'block';
 
                     const btnLogin = document.getElementById('btn-login');
-                    if (btnLogin) btnLogin.innerHTML = `◀ Voltar <span class="hide-mobile">pra Loja</span> &nbsp;|&nbsp; <span id="btn-real-logout" style="cursor:pointer; color:red;">Sair</span>`;
+                    if (btnLogin) btnLogin.innerHTML = `◀ Voltar <span class="hide-mobile">&nbsp;pra Loja</span> &nbsp;|&nbsp; <span id="btn-real-logout" style="cursor:pointer; color:red;">Sair</span>`;
                 }
                 return;
             }

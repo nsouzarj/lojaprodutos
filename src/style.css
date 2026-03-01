@@ -373,9 +373,15 @@ h4 {
   animation: fadeUp 0.8s ease forwards;
 }
 
-.hero-title {
-  font-size: clamp(2.5rem, 5vw, 4.5rem);
-  letter-spacing: -1px;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .hero-title {
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    letter-spacing: -1px;
+  }
 }
 
 .hero-subtitle {
