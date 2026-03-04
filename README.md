@@ -101,6 +101,7 @@ graph TD
 ### Para o Administrador/Vendedor 👑:
 - **Tabelas de Gestão Paginadas:** Clientes, Kardex, Vendas e Catálogo operam sob uma matriz de Paginação Frontend inteligente. A busca varre todo o array do catálogo e redesenha sua página instantaneamente aos milhares. Nenhuma tabela "quebra" a tela ou cria scrolls de milhares de pixels num celular.
 - **Relatório de Funil Financeiro de Extrema Precisão:** Acesso na Dashboard a Receitas Brutas com filtros por Range de Datas. O Gráfico "Mix de Vendas" possui exclusão inteligente: ele retira sumariamente qualquer pedido faturado que ainda esteja constando como "Cancelado" ou "Pendente" (Aguardando pagode) no banco de dados. Você só enxerga fatias de itens onde o dinheiro já pingou na conta.
+- **Análise de Desempenho (Vendas vs Compras):** Novo gráfico de barras agrupadas que cruza as Receitas (vendas reais concluídas) com o Custo de Reposição de Estoque (compras baseadas no preço de custo de cada fornecedor). Segmentado ativamente por Departamento (Vestuário, Cosméticos, Acessórios, Perfumaria) e contando com um filtro dinâmico semanal customizado e 100% traduzido para o Português (pt-BR).
 - **Gestão Simplificada do Catálogo** com possibilidade extra: **Inclusão do Preço de Custo Oculto** do seu estoque, que o cliente não vê. Permite ao gerente visualizar o ROI facilmente. 
 - Atualização unitária de status rápida com devolução automática do produto cancelado para o fluxo do Estoque do sistema, reativando a reposição sem intervenção.
 

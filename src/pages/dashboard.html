@@ -259,6 +259,24 @@
                      </div>
                    </div>
                 </div>
+
+                <!-- Novo Gráfico: Vendas vs Compras -->
+                <div class="glass-panel p-5 rounded-xl border border-border-dynamic/30 relative mt-6">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
+                        <h4 class="text-main font-semibold text-sm uppercase tracking-wide">Desempenho: Vendas vs Compras (Por Departamento)</h4>
+                        
+                        <div class="flex items-center gap-2">
+                            <label for="chart-week-filter" class="text-sm font-medium text-muted">Período:</label>
+                            <select id="chart-week-filter" class="px-3 py-1.5 border border-border-dynamic/50 rounded-lg bg-surface-dynamic border-border-dynamic text-main text-sm focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all">
+                                <option value="">Carregando...</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div id="chart-vendas-compras" class="w-full h-[350px] flex items-center justify-center">
+                        <span class="text-muted text-sm animate-pulse">Aguardando dados...</span>
+                    </div>
+                </div>
              </div>
 
              <div id="dash-movimentacoes" class="dash-panel p-6 glass-panel rounded-2xl" style="display: none;">

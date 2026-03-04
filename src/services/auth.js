@@ -30,10 +30,16 @@ export async function checkSession() {
         }
 
         if (btnLogin) {
+            const btnLogoutStore = document.getElementById('btn-logout-store');
+
             if (document.getElementById('view-dashboard') && document.getElementById('view-dashboard').style.display === 'block') {
-                btnLogin.innerHTML = `◀ Voltar <span class="hide-mobile">&nbsp;pra Loja</span> &nbsp;|&nbsp; Sair`;
+                btnLogin.innerHTML = `◀ Voltar <span class="hide-mobile">&nbsp;pra Loja</span>`;
+                btnLogin.removeAttribute('title');
+                if (btnLogoutStore) btnLogoutStore.style.display = 'inline-flex';
             } else {
                 btnLogin.innerHTML = `👤 <b>${firstName}</b> <span class="hide-mobile">&nbsp;(Painel)</span>`;
+                btnLogin.title = `Painel de compras do usuário ${fullName}`;
+                if (btnLogoutStore) btnLogoutStore.style.display = 'inline-flex';
             }
         }
 
@@ -54,6 +60,9 @@ export async function checkSession() {
 
     } else {
         if (btnLogin) btnLogin.innerHTML = 'Entrar';
+        const btnLogoutStore = document.getElementById('btn-logout-store');
+        if (btnLogoutStore) btnLogoutStore.style.display = 'none';
+
         const adminContainers = document.querySelectorAll('.admin-only');
         adminContainers.forEach(el => el.style.display = 'none');
     }
@@ -84,20 +93,7 @@ export function setupAuth() {
                     viewStore.style.display = 'none';
                     if (iconCart) iconCart.style.display = 'none';
                     viewDash.style.display = 'block';
-                    btnLogin.innerHTML = `◀ Voltar <span class="hide-mobile">&nbsp;pra Loja</span> &nbsp;|&nbsp; <span id="btn-real-logout" style="cursor:pointer; color:red;">Sair</span>`;
-
-                    // Adiciona listening no botao sair vermelho
-                    setTimeout(() => {
-                        const btnRealLogout = document.getElementById('btn-real-logout');
-                        if (btnRealLogout) {
-                            btnRealLogout.addEventListener('click', (ev) => {
-                                ev.stopPropagation(); // Evitar duplo click
-                                repo.signOut().then(() => {
-                                    window.location.href = import.meta.env.BASE_URL || '/';
-                                });
-                            });
-                        }
-                    }, 50);
+                    btnLogin.innerHTML = `◀ Voltar <span class="hide-mobile">&nbsp;pra Loja</span>`;
 
                 } else {
                     // Clicou no botão global para "Voltar para Loja"
@@ -117,6 +113,16 @@ export function setupAuth() {
                 return;
             }
             authModal.classList.add('active');
+        });
+    }
+
+    const btnLogoutStore = document.getElementById('btn-logout-store');
+    if (btnLogoutStore) {
+        btnLogoutStore.addEventListener('click', (e) => {
+            e.preventDefault();
+            repo.signOut().then(() => {
+                window.location.href = import.meta.env.BASE_URL || '/';
+            });
         });
     }
 
@@ -238,12 +244,7 @@ export function setupAuth() {
                 const hasCompletedProfile = profileObj && profileObj.phone && profileObj.address;
 
                 if (viewStore && viewDash) {
-                    if (role === 'administrador' || role === 'vendedor') {
-                        // Admin/Vendedor sempre pro painel
-                        viewStore.style.display = 'none';
-                        if (iconCart) iconCart.style.display = 'none';
-                        viewDash.style.display = 'block';
-                    } else if (!hasCompletedProfile) {
+                    if (!hasCompletedProfile && role !== 'administrador' && role !== 'vendedor') {
                         // COMPRADOR INCOMPLETO -> Vai pro Dashboard "Meu Perfil"
                         viewStore.style.display = 'none';
                         if (iconCart) iconCart.style.display = 'none';
@@ -261,13 +262,8 @@ export function setupAuth() {
                         if (dashPerfilPanel) dashPerfilPanel.style.display = 'block';
 
                         showDialog("Complete seu Cadastro 👋", "Por favor, preencha seus dados de Endereço e Telefone antes de ir para a vitrine para garantirmos a sua entrega.", false);
-                    } else if (ordersCount && ordersCount > 0) {
-                        // Comprador com hitórico -> Painel de Pedidos
-                        viewStore.style.display = 'none';
-                        if (iconCart) iconCart.style.display = 'none';
-                        viewDash.style.display = 'block';
                     } else {
-                        // Novo comprador já completinho: fica diretamente na Vitrine!
+                        // Fica diretamente na Vitrine para todos os usuários (Admin, Comprador com/sem pedido)
                         viewStore.style.display = 'block';
                         if (iconCart) iconCart.style.display = 'inline-flex';
                         viewDash.style.display = 'none';
