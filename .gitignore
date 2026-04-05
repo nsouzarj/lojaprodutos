@@ -1,3 +1,4 @@
+.env
 /.agent
 /dist
 /HTACCESS_CLINIPET.txt
