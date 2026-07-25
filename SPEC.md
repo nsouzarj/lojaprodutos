@@ -8,6 +8,30 @@
 
 **Arquitetura:** SPA com camadas SOLID — UI → Services (regras de negócio) → Repositories (acesso a dados)
 
+### Perfis de Usuário
+
+```mermaid
+mindmap
+  root((👥 Usuários))
+    Comprador
+      Ver vitrine
+      Comprar produtos
+      Avaliar produtos
+      Ver minhas compras
+      Editar perfil
+    Vendedor
+      Tudo do Comprador
+      Gerenciar produtos
+      Gerenciar pedidos
+      Ver relatórios
+      Ver clientes
+      Ver kardex
+    Administrador
+      Tudo do Vendedor
+      Excluir pedidos
+      Acesso total RLS
+```
+
 ---
 
 ## 2. Requisitos Funcionais (RF)
@@ -97,6 +121,39 @@
 
 ### Módulo: Admin — Relatórios
 
+```mermaid
+flowchart TD
+    subgraph Metrics["📊 Métricas"]
+        M1["💰 Receita Total Bruta<br/>filtro por período"]
+        M2["📦 Capital imobilizado<br/>em estoque"]
+    end
+    
+    subgraph Cards["📇 Cards por Status"]
+        C1["Pendentes: Qtd + Valor"]
+        C2["Pagos: Qtd + Valor"]
+        C3["Enviados: Qtd + Valor"]
+        C4["Entregues: Qtd + Valor"]
+        C5["Cancelados: Qtd + Valor"]
+    end
+    
+    subgraph Highlights["🏆 Destaques"]
+        H1["Produto mais caro"]
+        H2["Produto mais barato"]
+        H3["Produto mais vendido"]
+    end
+    
+    subgraph Charts["📈 Gráficos (ApexCharts)"]
+        G1["Receita 7 dias<br/>(linha)"]
+        G2["Mix por departamento<br/>(donut)"]
+        G3["Vendas vs Compras<br/>(barras)"]
+    end
+
+    style Charts fill:#f3e5f5,stroke:#7b1fa2
+    style Metrics fill:#e3f2fd,stroke:#1565c0
+    style Cards fill:#fff3e0,stroke:#e65100
+    style Highlights fill:#e8f5e9,stroke:#2e7d32
+```
+
 | ID | Descrição | Prioridade |
 |---|---|---|
 | RF-49 | Receita Total Bruta com filtro por período (Flatpickr pt-BR) | Alta |
@@ -113,6 +170,35 @@
 | RF-55 | Tabela com todos os usuários cadastrados (nome, telefone, CEP, endereço, cidade, role) | Média |
 
 ### Módulo: UI/UX
+
+```mermaid
+flowchart LR
+    subgraph Theme["🎨 Tema"]
+        T1["Claro 🌞"]
+        T2["Escuro 🌙"]
+        T3["localStorage<br/>persistência"]
+        T1 <--> T2
+        T2 --> T3
+        T1 --> T3
+    end
+    
+    subgraph Responsivo["📱 Responsivo"]
+        R1["Desktop 4K 🖥️"]
+        R2["Tablet 📱"]
+        R3["Smartphone 📱"]
+        R1 --> R2 --> R3
+    end
+    
+    subgraph Design["Design System"]
+        D1["Glassmorphism"]
+        D2["Variáveis CSS"]
+        D3["Modais globais"]
+    end
+
+    style Theme fill:#e3f2fd,stroke:#1565c0
+    style Responsivo fill:#e8f5e9,stroke:#2e7d32
+    style Design fill:#fff3e0,stroke:#e65100
+```
 
 | ID | Descrição | Prioridade |
 |---|---|---|
@@ -164,52 +250,206 @@
 
 ### 5.1 Diagrama de Camadas
 
-```
-┌─────────────────────────────────────────┐
-│            UI Layer                      │
-│  index.html → main.js (montagem DOM)    │
-│  ├─ components/ (header, footer, modals) │
-│  ├─ pages/ (store.html, dashboard.html)  │
-│  └─ ui/ (dialog, theme, navigation)      │
-├─────────────────────────────────────────┤
-│         Service Layer (Regras)           │
-│  ├─ auth.js     → sessão, login, role    │
-│  ├─ cart.js     → carrinho, checkout     │
-│  ├─ products.js → CRUD, kardex, galeria  │
-│  ├─ orders.js   → pedidos, relatórios    │
-│  ├─ profile.js  → perfil, admin users    │
-│  └─ reviews.js  → avaliações             │
-├─────────────────────────────────────────┤
-│       Repository Layer (Data Access)     │
-│  ├─ authRepository.js                    │
-│  ├─ productRepository.js                 │
-│  └─ orderRepository.js                   │
-├─────────────────────────────────────────┤
-│            Supabase (BaaS)               │
-│  ├─ PostgreSQL (tables + RLS)            │
-│  ├─ Auth (email/password, JWT)           │
-│  └─ Storage (bucket "produtos")          │
-└─────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph UI["UI Layer (Vanilla JS)"]
+        direction TB
+        A1["index.html → main.js"] 
+        A2["components/<br/>header, footer, modals"]
+        A3["pages/<br/>store, dashboard"]
+        A4["ui/<br/>dialog, theme, navigation"]
+    end
+    
+    subgraph Services["Service Layer (Regras de Negócio)"]
+        direction TB
+        B1["auth.js<br/>sessão, login, role"]
+        B2["cart.js<br/>carrinho, checkout"]
+        B3["products.js<br/>CRUD, kardex, galeria"]
+        B4["orders.js<br/>pedidos, relatórios"]
+        B5["profile.js<br/>perfil, admin"]
+        B6["reviews.js<br/>avaliações"]
+    end
+    
+    subgraph Repositories["Repository Layer (Data Access)"]
+        direction TB
+        C1["authRepository.js"]
+        C2["productRepository.js"]
+        C3["orderRepository.js"]
+    end
+    
+    subgraph Supabase["Supabase (BaaS)"]
+        direction TB
+        D1["PostgreSQL<br/>tables + RLS"]
+        D2["Auth<br/>email/password, JWT"]
+        D3["Storage<br/>bucket 'produtos'"]
+    end
+
+    UI --> Services
+    Services --> Repositories
+    Repositories --> Supabase
 ```
 
 ### 5.2 Tipos de Pagamento e Fluxo de Status
 
-```
-Cartão → "pago" (imediato)
-PIX    → "enviado" (imediato)
-Boleto → "pendente" → (3 dias) → cancel_expired_boletos() → "cancelado"
+```mermaid
+flowchart LR
+    A["🧾 Cartão"] --> B["✅ Pago<br/>(imediato)"]
+    C["⚡ PIX"] --> D["📦 Enviado<br/>(imediato)"]
+    E["📄 Boleto"] --> F["⏳ Pendente"]
+    F --> G["❌ Cancelado<br/>3 dias após vencimento"]
+    
+    style A fill:#e8f5e9,stroke:#2e7d32
+    style C fill:#fff3e0,stroke:#e65100
+    style E fill:#e3f2fd,stroke:#1565c0
+    style B fill:#c8e6c9,stroke:#2e7d32
+    style D fill:#ffe0b2,stroke:#e65100
+    style F fill:#fff9c4,stroke:#f9a825
+    style G fill:#ffcdd2,stroke:#c62828
 ```
 
 ### 5.3 Ciclo de Vida do Pedido
 
+```mermaid
+stateDiagram-v2
+    [*] --> Pendente
+    Pendente --> Pago: Cartão de crédito
+    Pendente --> Enviado: PIX
+    Pendente --> Cancelado: Boleto vencido
+    Pago --> Enviado: Despachar
+    Pago --> Cancelado: Reembolsar
+    Enviado --> Entregue: Confirmar entrega
+    Enviado --> Cancelado: Cancelar envio
+    
+    note right of Pendente
+        Boleto: status "pendente"
+        até 3 dias úteis
+    end note
+    
+    note right of Cancelado
+        Estoque devolvido
+        automaticamente
+    end note
 ```
-pendente → pago → enviado → entregue
-              ↘ cancelado ↙
+
+### 5.4 Fluxo de Checkout
+
+```mermaid
+flowchart TD
+    Start["🛒 Finalizar Compra"] --> Logged{Usuário logado?}
+    Logged -->|Não| Login["🔑 Fazer login"]
+    Login --> ProfileOk{Perfil completo?<br/>telefone + endereço + CEP}
+    Logged -->|Sim| ProfileOk
+    
+    ProfileOk -->|Não| EditPerfil["✏️ Completar perfil"]
+    EditPerfil --> Payment["💳 Escolher pagamento"]
+    ProfileOk -->|Sim| Payment
+    
+    Payment --> Choice{"Método"}
+    
+    Choice -->|Cartão| CardForm["Preencher cartão<br/>número, validade CVV, bandeira, parcelas"]
+    Choice -->|PIX| PixGenerate["Gerar QR Code PIX"]
+    Choice -->|Boleto| BoletoGen["Gerar boleto<br/>vencimento +3 dias úteis"]
+    
+    CardForm -->|Simula aprovação| Paid["✅ Status: PAGO"]
+    PixGenerate -->|Simula confirmação| Sent["✅ Status: ENVIADO"]
+    BoletoGen --> Pending["⏳ Status: PENDENTE<br/>Aguardar pagamento"]
+    
+    Paid --> Stock["📦 Deduzir estoque"]
+    Sent --> Stock
+    Pending --> Stock
+    
+    Stock --> ClearCart["🗑️ Esvaziar carrinho"]
+    
+    subgraph "Validações"
+        V1["Estoque disponível?"]
+        V2["Parcelamento<br/>1 unidade → limite produto<br/>2+ unidades → até 12x"]
+        V3["Boleto → 1x à vista"]
+    end
+    
+    style Start fill:#e8f5e9,stroke:#2e7d32
+    style Payment fill:#fff3e0,stroke:#e65100
+    style Paid fill:#c8e6c9,stroke:#2e7d32
+    style Sent fill:#c8e6c9,stroke:#2e7d32
+    style Pending fill:#fff9c4,stroke:#f9a825
 ```
 
 ---
 
 ## 6. Modelo de Dados
+
+### 6.0 Relacionamento entre Tabelas (DER)
+
+```mermaid
+erDiagram
+    profiles ||--o{ orders : "faz"
+    profiles ||--o{ product_reviews : "avalia"
+    products ||--o{ order_items : "contém"
+    products ||--o{ stock_movements : "movimenta"
+    products ||--o{ product_reviews : "tem"
+    orders ||--o{ order_items : "possui"
+    
+    profiles {
+        uuid id PK
+        text full_name
+        text phone
+        text zipcode
+        text address
+        text city
+        text role "comprador | vendedor | administrador"
+        timestamptz created_at
+    }
+    
+    products {
+        uuid id PK
+        text name
+        numeric price
+        numeric credit_price
+        text department
+        integer stock
+        integer installments
+        text card_brands
+        text tag
+        numeric cost_price "só admin vê"
+    }
+    
+    orders {
+        uuid id PK
+        uuid user_id FK
+        numeric total
+        text status "pendente | pago | enviado | entregue | cancelado"
+        text payment_method
+        text delivery_address
+        date boleto_due_date
+        timestamptz created_at
+    }
+    
+    order_items {
+        uuid id PK
+        uuid order_id FK
+        uuid product_id FK
+        integer quantity
+        numeric price_at_time
+    }
+    
+    stock_movements {
+        uuid id PK
+        uuid product_id FK
+        integer quantity "+/-"
+        text type "VENDA | CANCELAMENTO | ENTRADA_REPOSICAO | REATIVACAO_PEDIDO"
+        integer previous_stock
+        integer current_stock
+        uuid order_id FK
+        timestamptz created_at
+    }
+    
+    product_reviews {
+        uuid id PK
+        uuid product_id FK
+        uuid user_id FK
+        integer rating "1-5"
+        timestamptz created_at
+    }
+```
 
 ### 6.1 `profiles`
 
@@ -283,7 +523,32 @@ pendente → pago → enviado → entregue
 | user_id | UUID | → auth.users(id) |
 | created_at | TIMESTAMPTZ | DEFAULT NOW() |
 
-### 6.6 `product_reviews`
+### 6.6 Fluxo de Movimentação de Estoque (Kardex)
+
+```mermaid
+flowchart LR
+    VENDA --> S1["➖ Saída<br/>stock -= qtd"]
+    CANCELAMENTO --> S2["➕ Entrada<br/>stock += qtd"]
+    ENTRADA_REPOSICAO --> S3["➕ Entrada<br/>stock += qtd"]
+    REATIVACAO_PEDIDO --> S4["➖ Saída<br/>stock -= qtd"]
+    
+    subgraph Kardex["📋 stock_movements"]
+        direction TB
+        K1["Registra:<br/>- Produto<br/>- Quantidade (+/-)<br/>- Tipo<br/>- Estoque anterior/atual<br/>- Pedido vinculado<br/>- Usuário<br/>- Data/hora"]
+    end
+    
+    S1 --> Kardex
+    S2 --> Kardex
+    S3 --> Kardex
+    S4 --> Kardex
+    
+    style VENDA fill:#ffcdd2,stroke:#c62828
+    style CANCELAMENTO fill:#c8e6c9,stroke:#2e7d32
+    style ENTRADA_REPOSICAO fill:#c8e6c9,stroke:#2e7d32
+    style REATIVACAO_PEDIDO fill:#ffcdd2,stroke:#c62828
+```
+
+### 6.7 `product_reviews`
 
 | Coluna | Tipo | Restrições |
 |---|---|---|
@@ -299,6 +564,38 @@ pendente → pago → enviado → entregue
 ## 7. Especificação de Rotas (Navegação SPA)
 
 Não há rotas URL — a navegação é feita por exibição/ocultação de views:
+
+```mermaid
+flowchart TD
+    Start["🏠 Visitante"] --> Store["🛍️ Vitrine<br/>(view-store)"]
+    
+    Store --> Login["🔑 Login / Cadastro"]
+    Login --> Dashboard{"📊 Dashboard<br/>role?"}
+    
+    Dashboard -->|"comprador"| Compras["📦 Minhas Compras"]
+    Dashboard --> Perfil["👤 Meu Perfil"]
+    
+    Dashboard -->|"admin/vendedor"| AdminProd["📋 Produtos<br/>CRUD + Kardex"]
+    Dashboard --> AdminVendas["💰 Vendas<br/>Gerenciar pedidos"]
+    Dashboard --> AdminRelat["📈 Relatórios<br/>Gráficos + Métricas"]
+    Dashboard --> AdminClientes["👥 Clientes"]
+    Dashboard --> AdminKardex["📜 Kardex<br/>Histórico estoque"]
+    
+    AdminProd --> Restock["📦 Repor Estoque"]
+    
+    Store --> Cart["🛒 Carrinho"]
+    Cart --> Checkout["💳 Checkout"]
+    Checkout -->|"PIX"| Sent["✅ Pedido enviado"]
+    Checkout -->|"Cartão"| Paid["✅ Pedido pago"]
+    Checkout -->|"Boleto"| Pending["⏳ Pedido pendente"]
+    
+    Dashboard -->|"Voltar pra Loja"| Store
+    
+    style Start fill:#e8f5e9,stroke:#2e7d32
+    style Store fill:#e3f2fd,stroke:#1565c0
+    style Dashboard fill:#f3e5f5,stroke:#7b1fa2
+    style Checkout fill:#fff3e0,stroke:#e65100
+```
 
 | View | Elemento | Trigger |
 |---|---|---|
