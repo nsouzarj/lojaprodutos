@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Customer Purchase Workflow",
+    "subtitle": "Browse → Cart → Checkout → Payment → Order Created",
+    "output": "customer-purchase.workflow.html",
+    "animation": "trace",
+    "quality_profile": "standard",
+    "views": [
+      {
+        "id": "happy-path",
+        "label": "Happy purchase",
+        "focus": ["visitor", "catalog", "cart", "checkout", "payment", "order-done"],
+        "note": "The standard purchase flow from browsing to order confirmation."
+      }
+    ],
+    "output": "examples/customer-purchase.workflow.html",
+    "viewBox": [720, 780]
+  },
+  "lanes": [
+    { "id": "customer", "label": "Customer" },
+    { "id": "storefront", "label": "Storefront" },
+    { "id": "payment", "label": "Payment" }
+  ],
+  "phases": [
+    { "id": "browse", "label": "Browse", "fromCol": 0, "toCol": 1 },
+    { "id": "cart", "label": "Cart", "fromCol": 2, "toCol": 2 },
+    { "id": "checkout", "label": "Checkout", "fromCol": 3, "toCol": 3 },
+    { "id": "done", "label": "Done", "fromCol": 4, "toCol": 5 }
+  ],
+  "groups": [
+    { "id": "product_view", "label": "Product catalog", "lane": "storefront", "fromCol": 0, "toCol": 1, "variant": "emphasis" }
+  ],
+  "mainPath": ["visitor", "catalog", "cart", "checkout", "payment", "order-done"],
+  "nodes": [
+    { "id": "visitor", "lane": "customer", "col": 0, "type": "external", "label": "Visitor", "sublabel": "browses" },
+    { "id": "catalog", "lane": "storefront", "col": 1, "type": "frontend", "label": "Catalog", "sublabel": "grid + filters", "width": 110 },
+    { "id": "cart", "lane": "customer", "col": 2, "type": "frontend", "label": "Shopping Cart", "sublabel": "drawer + qty" },
+    { "id": "checkout", "lane": "customer", "col": 3, "type": "frontend", "label": "Checkout", "sublabel": "address + payment", "width": 110 },
+    { "id": "payment", "lane": "payment", "col": 4, "type": "backend", "label": "Payment", "sublabel": "CC / PIX / Boleto", "width": 110 },
+    { "id": "order-done", "lane": "customer", "col": 5, "type": "messagebus", "label": "Order Created", "sublabel": "status" }
+  ],
+  "edges": [
+    { "id": "visit-to-catalog", "from": "visitor", "to": "catalog", "variant": "default" },
+    { "id": "catalog-to-cart", "from": "catalog", "to": "cart", "label": "add to cart", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "route": "drop" },
+    { "id": "cart-to-checkout", "from": "cart", "to": "checkout", "label": "finalizar", "variant": "emphasis", "labelAt": [350, 160] },
+    { "id": "checkout-to-payment", "from": "checkout", "to": "payment", "label": "confirmar", "variant": "emphasis", "fromSide": "top", "toSide": "bottom", "route": "drop" },
+    { "id": "payment-to-done", "from": "payment", "to": "order-done", "label": "pago", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "route": "drop" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Payment Simulation",
+      "items": ["Cartão → 'pago' | PIX → 'enviado'", "Boleto → 'pendente' + PDF simulado"]
+    },
+    {
+      "dot": "cyan",
+      "title": "Business Rules",
+      "items": ["Estoque validado antes da compra", "Parcelamento: 1 item = limte, 2+ = 12x", "Boleto sempre 1x (à vista)"]
+    },
+    {
+      "dot": "rose",
+      "title": "Gates",
+      "items": ["Usuário deve estar logado", "Perfil: telefone + endereço + CEP", "Endereço obrigatório no checkout"]
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "Loja Virtus — Data Flow",
+    "subtitle": "User interaction → Services → Repositories → Supabase",
+    "output": "data-flow.dataflow.html",
+    "viewBox": [940, 740],
+    "quality_profile": "standard"
+  },
+  "stages": [
+    { "label": "UI Layer" },
+    { "label": "Services" },
+    { "label": "Repositories" },
+    { "label": "Supabase" }
+  ],
+  "nodes": [
+    { "id": "ui-catalog", "type": "frontend", "label": "Catalog UI", "stage": 0, "row": 0, "sublabel": "renderProducts()" },
+    { "id": "ui-cart", "type": "frontend", "label": "Cart UI", "stage": 0, "row": 1, "sublabel": "addToCart / checkout" },
+    { "id": "ui-dash", "type": "frontend", "label": "Dashboard UI", "stage": 0, "row": 2, "sublabel": "admin + reports" },
+    { "id": "s-products", "type": "backend", "label": "products.js", "stage": 1, "row": 0, "sublabel": "CRUD + kardex" },
+    { "id": "s-cart", "type": "backend", "label": "cart.js", "stage": 1, "row": 1, "sublabel": "checkout" },
+    { "id": "s-orders", "type": "backend", "label": "orders.js", "stage": 1, "row": 2, "sublabel": "status + reports" },
+    { "id": "s-auth", "type": "security", "label": "auth.js", "stage": 1, "row": 3, "sublabel": "login + session" },
+    { "id": "r-products", "type": "database", "label": "productRepo", "stage": 2, "row": 0, "sublabel": "fetch / insert / upload" },
+    { "id": "r-orders", "type": "database", "label": "orderRepo", "stage": 2, "row": 1, "sublabel": "orders + items + reports" },
+    { "id": "r-auth", "type": "security", "label": "authRepo", "stage": 2, "row": 2, "sublabel": "session / profile CRUD" },
+    { "id": "supa-products", "type": "database", "label": "products", "stage": 3, "row": 0, "sublabel": "PostgreSQL" },
+    { "id": "supa-orders", "type": "database", "label": "orders", "stage": 3, "row": 1, "sublabel": "orders + order_items" },
+    { "id": "supa-stock", "type": "database", "label": "stock_movements", "stage": 3, "row": 2, "sublabel": "kardex" },
+    { "id": "supa-auth", "type": "security", "label": "auth.users", "stage": 3, "row": 3, "sublabel": "Supabase Auth" }
+  ],
+  "flows": [
+    { "id": "cat-to-svc", "from": "ui-catalog", "to": "s-products", "label": "filter", "classification": "non-PII", "variant": "emphasis", "labelDy": 28 },
+    { "id": "cart-to-svc", "from": "ui-cart", "to": "s-cart", "label": "checkout", "classification": "PII touch", "variant": "emphasis", "labelDy": 28 },
+    { "id": "dash-to-svc", "from": "ui-dash", "to": "s-orders", "label": "load/update", "classification": "non-PII" },
+    { "id": "svc-cart-to-orders", "from": "s-cart", "to": "s-orders", "label": "my orders", "classification": "PII touch", "labelDx": -20 },
+    { "id": "svc-products-to-repo", "from": "s-products", "to": "r-products", "label": "CRUD", "classification": "non-PII", "variant": "emphasis" },
+    { "id": "svc-cart-to-repo", "from": "s-cart", "to": "r-orders", "label": "insert order", "classification": "PII touch", "variant": "emphasis", "labelAt": [370, 330], "via": [[320, 320], [420, 320]] },
+    { "id": "svc-orders-to-repo", "from": "s-orders", "to": "r-orders", "label": "reports", "classification": "non-PII", "labelDy": -20 },
+    { "id": "svc-auth-to-repo", "from": "s-auth", "to": "r-auth", "label": "sign in/up", "classification": "PII touch", "variant": "security" },
+    { "id": "repo-prod-to-db", "from": "r-products", "to": "supa-products", "label": "SQL", "classification": "non-PII", "variant": "emphasis", "labelAt": [640, 173] },
+    { "id": "repo-order-to-db", "from": "r-orders", "to": "supa-orders", "label": "SQL", "classification": "PII touch", "variant": "emphasis", "labelAt": [640, 288] },
+    { "id": "repo-auth-to-db", "from": "r-auth", "to": "supa-auth", "label": "JWT", "classification": "PII touch", "variant": "security", "labelAt": [640, 510] },
+    { "id": "repo-prod-to-stock", "from": "r-products", "to": "supa-stock", "label": "movements", "classification": "non-PII", "route": "vertical-channel" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Layer Isolation",
+      "items": ["UI never calls Supabase directly", "Services contain business rules", "Repositories encapsulate Supabase SDK"]
+    },
+    {
+      "dot": "cyan",
+      "title": "Key Data Stores",
+      "items": ["products: catalog + stock + pricing", "orders + order_items: purchase records", "stock_movements: audit trail (kardex)"]
+    },
+    {
+      "dot": "rose",
+      "title": "Security Boundaries",
+      "items": ["PII touch flows marked accordingly", "Auth flows use security variant", "RLS policies on all tables"]
+    }
+  ]
+}

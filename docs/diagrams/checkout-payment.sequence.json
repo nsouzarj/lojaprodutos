@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "diagram_type": "sequence",
+  "meta": {
+    "title": "Checkout and Payment Sequence",
+    "subtitle": "Cart → Validation → Payment → Order Persistence",
+    "output": "checkout-payment.sequence.html",
+    "viewBox": [960, 780],
+    "quality_profile": "showcase",
+    "animation": "trace",
+    "views": [
+      { "id": "credit-card", "label": "Credit card flow", "focus": ["cart", "auth-repo", "profile-svc", "order-repo", "product-repo", "order"], "note": "The full credit card checkout flow." },
+      { "id": "boleto-flow", "label": "Boleto flow", "focus": ["cart", "auth-repo", "order-repo", "product-repo", "order", "ls"], "note": "Boleto generates a PDF and stores temp data." }
+    ]
+  },
+  "participants": [
+    { "id": "cart", "type": "frontend", "label": "Cart UI", "sublabel": "checkout modal" },
+    { "id": "auth-repo", "type": "security", "label": "Auth Repo", "sublabel": "session" },
+    { "id": "profile-svc", "type": "backend", "label": "Profile", "sublabel": "loadUserProfile" },
+    { "id": "order-repo", "type": "database", "label": "Order Repo", "sublabel": "orders + items" },
+    { "id": "product-repo", "type": "database", "label": "Product Repo", "sublabel": "stock" },
+    { "id": "order", "type": "messagebus", "label": "Order", "sublabel": "created" },
+    { "id": "ls", "type": "cloud", "label": "localStorage", "sublabel": "boleto data" }
+  ],
+  "segments": [
+    { "from": 150, "to": 280, "label": "01 / Validate" },
+    { "from": 310, "to": 480, "label": "02 / Persist" },
+    { "from": 510, "to": 640, "label": "03 / Finalize" }
+  ],
+  "messages": [
+    { "id": "check-session", "from": "cart", "to": "auth-repo", "y": 185, "label": "getSession", "variant": "emphasis" },
+    { "id": "session-ok", "from": "auth-repo", "to": "cart", "y": 220, "label": "logged in", "variant": "return" },
+    { "id": "load-profile", "from": "cart", "to": "profile-svc", "y": 260, "label": "loadUserProfile", "variant": "emphasis" },
+    { "id": "profile-data", "from": "profile-svc", "to": "cart", "y": 298, "label": "phone+address", "variant": "return" },
+    { "id": "insert-order", "from": "cart", "to": "order-repo", "y": 345, "label": "insert order", "variant": "emphasis" },
+    { "id": "order-row", "from": "order-repo", "to": "order", "y": 380, "label": "order row", "variant": "default" },
+    { "id": "insert-items", "from": "cart", "to": "order-repo", "y": 420, "label": "order_items", "variant": "dashed" },
+    { "id": "deduct-stock", "from": "cart", "to": "product-repo", "y": 465, "label": "update stock", "variant": "emphasis" },
+    { "id": "stock-done", "from": "product-repo", "to": "cart", "y": 500, "label": "stock-1", "variant": "return" },
+    { "id": "save-boleto", "from": "cart", "to": "ls", "y": 545, "label": "boleto data", "variant": "security" },
+    { "id": "open-pdf", "from": "ls", "to": "cart", "y": 578, "label": "PDF template", "variant": "return" },
+    { "id": "confirmed", "from": "cart", "to": "order", "y": 620, "label": "order #", "variant": "emphasis" }
+  ],
+  "activations": [
+    { "participant": "cart", "from": 175, "to": 630, "type": "frontend" },
+    { "participant": "auth-repo", "from": 185, "to": 225, "type": "security" },
+    { "participant": "profile-svc", "from": 260, "to": 303, "type": "backend" },
+    { "participant": "order-repo", "from": 345, "to": 425, "type": "database" },
+    { "participant": "product-repo", "from": 465, "to": 505, "type": "database" },
+    { "participant": "ls", "from": 545, "to": 583, "type": "cloud" }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Validation",
+      "items": ["Session check via authRepo.getSession()", "Profile completeness (phone + address + CEP)", "Stock validation before order creation"]
+    },
+    {
+      "dot": "cyan",
+      "title": "Persistence",
+      "items": ["orders: total, status, payment_method, delivery_address", "order_items: product_id, quantity, price_at_time", "stock_movements: VENDA entry (negative)"]
+    },
+    {
+      "dot": "rose",
+      "title": "Boleto Path",
+      "items": ["Data stored in localStorage for PDF template", "boleto-template.html opened in new tab", "Vencimento em 3 dias úteis, auto-cancelamento"]
+    }
+  ]
+}

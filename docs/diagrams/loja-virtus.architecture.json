@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Loja Virtus — Architecture",
+    "subtitle": "E-commerce SPA with Vanilla JS + Supabase BaaS",
+    "output": "loja-virtus.architecture.html",
+    "quality_profile": "standard",
+    "views": [
+      { "id": "request-path", "label": "Request path", "focus": ["browser", "mainjs", "services", "repositories", "supabase-db"], "note": "Frontend-only request flow from browser to database." },
+      { "id": "auth-flow", "label": "Auth flow", "focus": ["auth-modal", "services", "supabase-auth"], "note": "Login and session management." }
+    ]
+  },
+  "components": [
+    { "id": "browser", "type": "external", "label": "Browser", "sublabel": "Chrome / Mobile", "pos": [40, 120], "size": [120, 60] },
+    { "id": "mainjs", "type": "frontend", "label": "main.js", "sublabel": "orchestrator", "pos": [240, 120], "size": [120, 60] },
+    { "id": "store", "type": "frontend", "label": "Store View", "sublabel": "product grid", "pos": [40, 400], "size": [120, 60] },
+    { "id": "dashboard", "type": "frontend", "label": "Dashboard", "sublabel": "admin + profile", "pos": [240, 400], "size": [120, 60] },
+    { "id": "auth-modal", "type": "frontend", "label": "Auth Modal", "sublabel": "login / register", "pos": [440, 400], "size": [120, 60] },
+    { "id": "services", "type": "backend", "label": "Services", "sublabel": "business logic", "pos": [440, 120], "size": [120, 60] },
+    { "id": "repositories", "type": "backend", "label": "Repositories", "sublabel": "data access", "pos": [640, 120], "size": [120, 60] },
+    { "id": "supabase-auth", "type": "security", "label": "Supabase Auth", "sublabel": "JWT + RLS", "pos": [640, 320], "size": [120, 60] },
+    { "id": "supabase-db", "type": "database", "label": "PostgreSQL", "sublabel": "products / orders", "pos": [840, 120], "size": [120, 60] }
+  ],
+  "boundaries": [
+    { "kind": "region", "label": "Frontend (Vanilla JS)", "wraps": ["browser", "mainjs", "store", "dashboard", "auth-modal"] },
+    { "kind": "region", "label": "Business Logic (SOLID)", "wraps": ["services", "repositories"] },
+    { "kind": "security-group", "label": "Supabase BaaS", "wraps": ["supabase-auth", "supabase-db"] }
+  ],
+  "connections": [
+    { "id": "browser-to-main", "from": "browser", "to": "mainjs", "label": "HTTP", "variant": "emphasis" },
+    { "id": "main-to-store", "from": "mainjs", "to": "store", "variant": "default", "route": "orthogonal-v" },
+    { "id": "main-to-dash", "from": "mainjs", "to": "dashboard", "variant": "default", "route": "orthogonal-v" },
+    { "id": "main-to-services", "from": "mainjs", "to": "services", "variant": "default" },
+    { "id": "store-to-services", "from": "store", "to": "services", "label": "calls", "variant": "emphasis", "route": "orthogonal-v" },
+    { "id": "dash-to-services", "from": "dashboard", "to": "services", "variant": "default", "route": "orthogonal-v" },
+    { "id": "auth-to-services", "from": "auth-modal", "to": "services", "label": "auth", "variant": "security", "route": "orthogonal-v" },
+    { "id": "services-to-repos", "from": "services", "to": "repositories", "variant": "default" },
+    { "id": "repos-to-db", "from": "repositories", "to": "supabase-db", "label": "SQL", "variant": "emphasis" },
+    { "id": "repos-to-auth", "from": "repositories", "to": "supabase-auth", "label": "JWT", "variant": "security", "route": "orthogonal-v" }
+  ],
+  "cards": [
+    { "dot": "emerald", "title": "UI Layer", "items": ["SPA via main.js mounts all HTML", "Store, Dashboard, Auth Modal", "Tailwind + Glassmorphism"] },
+    { "dot": "cyan", "title": "Services", "items": ["auth.js, cart.js, products.js, orders.js", "Validates stock, installments, boletos"] },
+    { "dot": "rose", "title": "Security", "items": ["Supabase Auth with JWT sessions", "Row-Level Security on all tables", "3 roles: comprador, vendedor, admin"] }
+  ]
+}

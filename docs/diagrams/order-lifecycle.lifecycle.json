@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "diagram_type": "lifecycle",
+  "meta": {
+    "title": "Order Lifecycle",
+    "subtitle": "Order state machine with payment methods and stock adjustments",
+    "output": "order-lifecycle.lifecycle.html",
+    "viewBox": [980, 680],
+    "quality_profile": "standard",
+    "animation": "trace",
+    "views": [
+      {
+        "id": "payment-path",
+        "label": "Payment paths",
+        "focus": ["pendente", "pago", "enviado", "entregue"],
+        "note": "Standard order progression from pending to delivered."
+      }
+    ]
+  },
+  "lanes": [
+    { "id": "main", "label": "Main Phases" },
+    { "id": "terminal", "label": "Terminal States" }
+  ],
+  "states": [
+    { "id": "pendente", "type": "start", "label": "Pendente", "lane": "main", "col": 0, "step": "01", "sublabel": "awaiting payment" },
+    { "id": "pago", "type": "active", "label": "Pago", "lane": "main", "col": 1, "step": "02", "sublabel": "payment confirmed" },
+    { "id": "enviado", "type": "active", "label": "Enviado", "lane": "main", "col": 2, "step": "03", "sublabel": "dispatched" },
+    { "id": "entregue", "type": "success", "label": "Entregue", "lane": "terminal", "col": 0, "sublabel": "completed" },
+    { "id": "cancelado", "type": "failure", "label": "Cancelado", "lane": "terminal", "col": 2, "sublabel": "stock returned" }
+  ],
+  "transitions": [
+    { "id": "cc-pago", "from": "pendente", "to": "pago", "label": "cartão", "variant": "emphasis", "labelAt": [170, 210] },
+    { "id": "pix-enviado", "from": "pendente", "to": "enviado", "label": "PIX", "variant": "emphasis", "fromSide": "top", "toSide": "top", "route": "top-channel", "labelAt": [248, 115] },
+    { "id": "boleto-pendente", "from": "pendente", "to": "enviado", "label": "boleto pago", "variant": "dashed", "fromSide": "top", "toSide": "top", "route": "top-channel", "labelDx": 50, "labelDy": -10 },
+    { "id": "boleto-expira", "from": "pendente", "to": "cancelado", "label": "boleto vencido", "variant": "security", "fromSide": "bottom", "toSide": "left", "route": "bottom-channel", "labelAt": [440, 440] },
+    { "id": "pago-enviado", "from": "pago", "to": "enviado", "label": "despachar", "variant": "emphasis", "labelAt": [325, 210] },
+    { "id": "enviado-entregue", "from": "enviado", "to": "entregue", "label": "entregue", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "route": "drop", "labelAt": [402, 530] },
+    { "id": "cancelar-pago", "from": "pago", "to": "cancelado", "label": "reembolsar", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "drop", "labelAt": [400, 380] },
+    { "id": "cancelar-enviado", "from": "enviado", "to": "cancelado", "label": "cancelar envio", "variant": "security", "fromSide": "bottom", "toSide": "top", "route": "drop", "labelAt": [505, 475] }
+  ],
+  "cards": [
+    {
+      "dot": "emerald",
+      "title": "Payment → Status",
+      "items": ["Cartão → 'pago' | PIX → 'enviado'", "Boleto → 'pendente' (aguarda pagamento)"]
+    },
+    {
+      "dot": "rose",
+      "title": "Boleto expiration",
+      "items": ["Vencimento em 3 dias úteis", "cancel_expired_boletos() 3 dias após", "Devolve estoque automaticamente"]
+    },
+    {
+      "dot": "cyan",
+      "title": "Stock",
+      "items": ["Cancelamento → devolve itens ao estoque", "Reativação → re-deduz estoque"]
+    }
+  ]
+}
